@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import NewSubjectModal from './NewSubjectModal'
 
-const Navbar = () => {
+const Navbar = ({ subjects, onAddSubject }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   return (
@@ -12,7 +12,7 @@ const Navbar = () => {
         </div>
         <div className='flex items-center gap-[15px]'>
             <div className='flex gap-[5px] text-[#333]'>
-                <p>Bu gün: </p><p>3 dərs,</p> <p>Üst həftə</p>
+                <p>Fənn sayı: </p><p>{subjects.length}</p>
             </div>
             <button
               type='button'
@@ -24,7 +24,15 @@ const Navbar = () => {
         </div>
       </div>
 
-      {isModalOpen && <NewSubjectModal onClose={() => setIsModalOpen(false)} />}
+      {isModalOpen && (
+        <NewSubjectModal
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={(subject) => {
+            onAddSubject(subject)
+            setIsModalOpen(false)
+          }}
+        />
+      )}
     </div>
   )
 }
