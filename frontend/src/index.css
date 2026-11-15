@@ -1,1 +1,54 @@
 @import "tailwindcss";
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 0;
+  }
+
+  body {
+    padding: 15mm !important;
+  }
+
+  /* Səhifə qabı çapda boşluq yaratmasın */
+  html,
+  body,
+  #root,
+  .container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background: none !important;
+  }
+
+  /* Dialoqlar çapda görünməsin */
+  [role="dialog"] {
+    display: none !important;
+  }
+
+  /* Dərs rəngləri çapda da çıxsın */
+  .print-exact {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+@keyframes schedule-highlight {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.highlight-flash {
+  animation: schedule-highlight 3.2s ease forwards;
+}

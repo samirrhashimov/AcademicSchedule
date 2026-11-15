@@ -4,6 +4,7 @@ import {
   addWeeks,
   baseModeForWeek,
   defaultWeekState,
+  getWeekNumber,
   mondayOfWeek,
   normalizeWeekState,
   parseDayKey,
@@ -29,6 +30,12 @@ describe('gün açarı', () => {
 
   it('mondayOfWeek bazar günündən də bazar ertəsini tapır', () => {
     assert.equal(toDayKey(mondayOfWeek(new Date(2026, 10, 15))), '2026-11-09')
+  })
+})
+
+describe('getWeekNumber', () => {
+  it('2026-11-15 üçün 47 qaytarır', () => {
+    assert.equal(getWeekNumber(new Date(2026, 10, 15)), 47)
   })
 })
 

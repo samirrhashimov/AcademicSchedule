@@ -23,13 +23,22 @@ const buildDayDetails = (schedule = []) => {
   return details
 }
 
-const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = false }) => {
+const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = false, preset = null }) => {
   const isCopyMode = Boolean(copyMode)
   const isEditMode = Boolean(initialSubject) && !isCopyMode
-  const [selectedDays, setSelectedDays] = useState(() => (
-    initialSubject ? initialSubject.schedule.map((lesson) => lesson.day) : []
-  ))
-  const [dayDetails, setDayDetails] = useState(() => buildDayDetails(initialSubject?.schedule))
+  const [selectedDays, setSelectedDays] = useState(() => {
+    if (initialSubject) {
+      return initialSubject.schedule.map((lesson) => lesson.day)
+    }
+    return preset ? preset.map((slot) => slot.day) : []
+  })
+  const [dayDetails, setDayDetails] = useState(() => ({
+    ...buildDayDetails(initialSubject?.schedule),
+    ...Object.fromEntries((preset || []).map((slot) => ([
+      slot.day,
+      { startTime: slot.startTime || '', endTime: slot.endTime || '' },
+    ]))),
+  }))
   const [subjectName, setSubjectName] = useState(initialSubject?.name || '')
   const [lectureCount, setLectureCount] = useState(initialSubject?.lectureCount ?? 2)
   const [seminarCount, setSeminarCount] = useState(initialSubject?.seminarCount ?? 1)

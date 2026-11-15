@@ -38,6 +38,7 @@ const loadSubjects = () => {
 
 function App() {
   const [subjects, setSubjects] = useState(loadSubjects)
+  const [jump, setJump] = useState(null)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects))
@@ -89,6 +90,7 @@ function App() {
       <Navbar
         subjects={subjects}
         onAddSubject={addSubject}
+        onSelectLesson={(selection) => setJump({ ...selection, n: Date.now() })}
       />
       <Dashboard
         subjects={subjects}
@@ -96,6 +98,7 @@ function App() {
         onRemoveSubject={removeSubject}
         onUpdateSubject={updateSubject}
         onApplyLessonType={applyLessonType}
+        jump={jump}
       />
     </div>
   )

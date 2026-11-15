@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getSequenceIndex, resolveLessonType } from '../lib/subjects'
+import { getWeekNumber, mondayOfWeek } from '../lib/weeks'
 
 const typeLabels = {
   lecture: 'Mühazirə',
@@ -12,14 +13,9 @@ const frequencyLabels = {
   'lower-week': 'Alt həftə',
 }
 
-const getWeekNumber = (date) => {
-  const firstDayOfYear = new Date(date.getFullYear(), 0, 1)
-  return Math.ceil((((date - firstDayOfYear) / 86400000) + firstDayOfYear.getDay() + 1) / 7)
-}
-
-const SearchModal = ({ subjects, onClose }) => {
+const SearchModal = ({ subjects, onClose, onSelectLesson }) => {
   const [query, setQuery] = useState('')
-  const weekNumber = getWeekNumber(new Date())
+  const weekNumber = getWeekNumber(mondayOfWeek(new Date()))
 
   const normalizedQuery = query.trim().toLowerCase()
   const results = normalizedQuery
@@ -78,16 +74,23 @@ const SearchModal = ({ subjects, onClose }) => {
                       const sequenceIndex = getSequenceIndex(subject, lessonIndex, weekNumber)
                       const type = resolveLessonType(subject, sequenceIndex)
                       return (
-                        <li
-                          key={`${lesson.day}-${lesson.startTime}`}
-                          className='flex items-center justify-between gap-[8px] rounded-[5px] bg-[#F7F3EC] px-[8px] py-[5px] text-[13px]'
-                        >
-                          <span className='truncate'>
-                            <strong>{lesson.day}</strong> {lesson.startTime}–{lesson.endTime}
-                          </span>
-                          <span className={`shrink-0 rounded-full px-[8px] py-[2px] text-[12px] ${type === 'lecture' ? 'bg-[#FCE5E0] text-[#A65B46]' : 'bg-[#E3F1EC] text-[#477A68]'}`}>
-                            {typeLabels[type]}
-                          </span>
+                        <li key={`${lesson.day}-${lesson.startTime}`}>
+                          <button
+                            type='button'
+                            onClick={() => {
+                              onSelectLesson({ subjectId: subject.id, sequenceIndex })
+                              onClose()
+                            }}
+                            title='Cədvəldə göstər'
+                            className='flex w-full items-center justify-between gap-[8px] rounded-[5px] bg-[#F7F3EC] px-[8px] py-[5px] text-left text-[13px] hover:bg-[#EFE6D2]'
+                          >
+                            <span className='truncate'>
+                              <strong>{lesson.day}</strong> {lesson.startTime}–{lesson.endTime}
+                            </span>
+                            <span className={`shrink-0 rounded-full px-[8px] py-[2px] text-[12px] ${type === 'lecture' ? 'bg-[#FCE5E0] text-[#A65B46]' : 'bg-[#E3F1EC] text-[#477A68]'}`}>
+                              {typeLabels[type]}
+                            </span>
+                          </button>
                         </li>
                       )
                     })}

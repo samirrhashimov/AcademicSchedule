@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { FiSearch } from 'react-icons/fi'
+import { FiPrinter, FiSearch } from 'react-icons/fi'
 import NewSubjectModal from './NewSubjectModal'
 import SearchModal from './SearchModal'
 
-const Navbar = ({ subjects, onAddSubject }) => {
+const Navbar = ({ subjects, onAddSubject, onSelectLesson }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   return (
-    <div>
+    <div className='print:hidden'>
       <div className='my-[15px] flex flex-wrap items-center justify-between gap-[10px] border-b-[3px] border-b-[#A65B46] pb-[15px]'>
         <div className=''>
           <p className='font-bold font-["Trirong"] text-[20px] text-[#A65B46]'>AcademicSchedule</p>
@@ -25,6 +25,15 @@ const Navbar = ({ subjects, onAddSubject }) => {
           </button>
           <button
             type='button'
+            onClick={() => window.print()}
+            aria-label='Çap et'
+            title='Çap et'
+            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF]'
+          >
+            <FiPrinter aria-hidden='true' />
+          </button>
+          <button
+            type='button'
             onClick={() => setIsModalOpen(true)}
             className='font-[Inter] rounded-[5px] bg-[#434140] px-[10px] py-[5px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
           >
@@ -36,6 +45,7 @@ const Navbar = ({ subjects, onAddSubject }) => {
       {isSearchOpen && (
         <SearchModal
           subjects={subjects}
+          onSelectLesson={onSelectLesson}
           onClose={() => setIsSearchOpen(false)}
         />
       )}

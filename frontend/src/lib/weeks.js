@@ -2,6 +2,11 @@ export const VALID_WEEK_MODES = ['upper-week', 'lower-week']
 
 export const otherMode = (mode) => (mode === 'upper-week' ? 'lower-week' : 'upper-week')
 
+export const getWeekNumber = (date) => {
+  const firstDayOfYear = new Date(date.getFullYear(), 0, 1)
+  return Math.ceil((((date - firstDayOfYear) / 86400000) + firstDayOfYear.getDay() + 1) / 7)
+}
+
 export const toDayKey = (date) => (
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 )

@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
-import { FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiCopy, FiEdit2, FiTrash2 } from 'react-icons/fi'
+import { useEffect, useRef, useState } from 'react'
+import { FiCalendar, FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiCopy, FiEdit2, FiTrash2 } from 'react-icons/fi'
+import DayInfoModal from './DayInfoModal'
 import NewSubjectModal from './NewSubjectModal'
 import { getSequenceIndex, resolveLessonType } from '../lib/subjects'
 import {
   addWeeks,
   defaultWeekState,
+  getWeekNumber,
   normalizeWeekState,
   reanchorWeekState,
   resolveWeekType,
@@ -39,11 +41,6 @@ const loadWeekState = (fallbackMonday) => {
     }
 }
 
-const getWeekNumber = (date) => {
-    const firstDayOfYear = new Date(date.getFullYear(), 0, 1)
-    return Math.ceil((((date - firstDayOfYear) / 86400000) + firstDayOfYear.getDay() + 1) / 7)
-}
-
 const getMonday = (date) => {
     const monday = new Date(date)
     const day = monday.getDay()
@@ -61,6 +58,8 @@ const toMinutes = (time) => {
     const [hour, minute] = String(time).split(':').map(Number)
     return hour * 60 + (minute || 0)
 }
+
+const formatMinutes = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
 
 const HOUR_PX = 82
 
@@ -238,7 +237,7 @@ const CalendarEvent = ({ subject, lesson, sequenceIndex, onRequestTypeChange }) 
     const overridden = isOverridden(subject, sequenceIndex)
 
     return (
-    <div className={`h-full overflow-hidden rounded-[5px] border-l-[4px] p-[7px] text-[13px] ${
+    <div className={`print-exact h-full overflow-hidden rounded-[5px] border-l-[4px] p-[7px] text-[13px] ${
         type === 'lecture'
             ? 'border-[#A65B46] bg-[#FCE5E0]'
             : 'border-[#477A68] bg-[#E3F1EC]'
@@ -285,7 +284,7 @@ const TypeChangeDialog = ({ pending, onChoose, onCancel }) => {
             <div className='w-full max-w-[420px] rounded-[8px] bg-[#FFF] p-[20px] text-[#333] shadow-lg'>
                 <h2 id='type-change-title' className='mb-[8px] text-[18px] font-bold'>Dərs tipini dəyiş</h2>
                 <p className='mb-[4px] text-[14px]'>
-                    {pending.subject.name} — {pending.lesson.day},{' '}
+                    {pending.subject.name} - {pending.lesson.day},{' '}
                     {getStartTime(pending.lesson)}: {typeLabels[pending.currentType]} →{' '}
                     <strong>{typeLabels[pending.newType]}</strong>
                 </p>
@@ -298,14 +297,14 @@ const TypeChangeDialog = ({ pending, onChoose, onCancel }) => {
                         onClick={() => onChoose('once')}
                         className='rounded-[5px] border border-[#477A68] px-[10px] py-[8px] text-[14px] font-medium text-[#477A68] hover:bg-[#E3F1EC]'
                     >
-                        Bir dəfəlik — yalnız bu həftəki dərs
+                        Bir dəfəlik - yalnız bu həftəki dərs
                     </button>
                     <button
                         type='button'
                         onClick={() => onChoose('always')}
                         className='rounded-[5px] bg-[#434140] px-[10px] py-[8px] text-[14px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
                     >
-                        Həmişə — bu gündən etibarən nisbətlə davam etsin
+                        Həmişə - bu gündən etibarən nisbətlə davam etsin
                     </button>
                     <button
                         type='button'
@@ -347,14 +346,14 @@ const WeekTypeChangeDialog = ({ pending, currentLabel, onChoose, onCancel }) => 
                         onClick={() => onChoose('once')}
                         className='rounded-[5px] border border-[#477A68] px-[10px] py-[8px] text-[14px] font-medium text-[#477A68] hover:bg-[#E3F1EC]'
                     >
-                        İstisna — yalnız bu həftə
+                        İstisna - yalnız bu həftə
                     </button>
                     <button
                         type='button'
                         onClick={() => onChoose('always')}
                         className='rounded-[5px] bg-[#434140] px-[10px] py-[8px] text-[14px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
                     >
-                        Həmişə — bu həftədən etibarən o sıra ilə davam etsin
+                        Həmişə - bu həftədən etibarən o sıra ilə davam etsin
                     </button>
                     <button
                         type='button'
@@ -407,7 +406,7 @@ const DeleteConfirmDialog = ({ subject, onConfirm, onCancel }) => {
     )
 }
 
-const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, onApplyLessonType }) => {
+const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, onApplyLessonType, jump }) => {
     const today = new Date()
     const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate())
     const currentWeekStart = getMonday(today)
@@ -419,6 +418,35 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
     const [pendingWeekChange, setPendingWeekChange] = useState(null)
     const [pendingDeleteSubject, setPendingDeleteSubject] = useState(null)
     const [copyingSubject, setCopyingSubject] = useState(null)
+    const [isDayInfoOpen, setIsDayInfoOpen] = useState(false)
+    const [pendingSlot, setPendingSlot] = useState(null)
+    const [hoverSlot, setHoverSlot] = useState(null)
+    const [highlight, setHighlight] = useState(null)
+    const highlightRef = useRef(null)
+    const highlightTimeout = useRef(null)
+    const lastJumpRef = useRef(0)
+
+    // Google Calendar kimi: cədvəldə sağ kliklənən yerə yeni fənn.
+    const handleGridContextMenu = (event, dayName) => {
+        event.preventDefault()
+        const rect = event.currentTarget.getBoundingClientRect()
+        const totalMinutes = hours.length * 60
+        const clicked = hours[0] * 60 + ((event.clientY - rect.top) / rect.height) * totalMinutes
+        const rounded = Math.round(clicked / 15) * 15
+        const rangeEnd = (hours[hours.length - 1] + 1) * 60
+        const start = Math.max(hours[0] * 60, Math.min(rounded, rangeEnd - 30))
+        setPendingSlot({ day: dayName, startTime: formatMinutes(start), endTime: formatMinutes(start + 60) })
+    }
+
+    // Hover olunan yerdə mavi vaxt xətti (qırmızı "indi" xəttinin tayı).
+    const handleGridHover = (event, dayName) => {
+        const rect = event.currentTarget.getBoundingClientRect()
+        const totalMinutes = hours.length * 60
+        const pointed = hours[0] * 60 + ((event.clientY - rect.top) / rect.height) * totalMinutes
+        const snapped = Math.round(pointed / 15) * 15
+        const clamped = Math.max(hours[0] * 60, Math.min(snapped, (hours[hours.length - 1] + 1) * 60))
+        setHoverSlot({ day: dayName, minutes: clamped })
+    }
     const [sidebarOpen, setSidebarOpen] = useState(() => {
         try {
             return localStorage.getItem('academic-schedule-sidebar-open') !== '0'
@@ -536,21 +564,48 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
     )
 
     const todayLessons = lessonsIn(currentActiveSubjects, days[todayIndex], currentWeekNumber)
-    const nextLesson = (() => {
-        const remaining = todayLessons.filter(({ lesson }) => toMinutes(lesson.endTime || getStartTime(lesson)) > nowMinutes)
-        if (remaining.length > 0) {
-            return { ...remaining[0], day: days[todayIndex], isToday: true }
-        }
-        for (let index = todayIndex + 1; index < 7; index += 1) {
-            const upcoming = lessonsIn(currentActiveSubjects, days[index], currentWeekNumber)
-            if (upcoming.length > 0) {
-                return { ...upcoming[0], day: days[index], isToday: false }
-            }
-        }
-        return null
-    })()
+
+    // Sabah: həftə dəyişirsə (bazar → bazar ertəsi) növbəti həftənin tipi ilə.
+    const tomorrowDate = new Date(todayMidnight)
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1)
+    const tomorrowMonday = getMonday(tomorrowDate)
+    const tomorrowWeekNumber = getWeekNumber(tomorrowMonday)
+    const tomorrowMode = resolveWeekType(weekState, tomorrowMonday).mode
+    const tomorrowActiveSubjects = subjects.filter((subject) => (
+        subject.frequency === 'every-week'
+        || subject.frequency === tomorrowMode
+    ))
+    const tomorrowDayName = days[(todayIndex + 1) % 7]
+    const tomorrowLessons = lessonsIn(tomorrowActiveSubjects, tomorrowDayName, tomorrowWeekNumber)
 
     const mobileLessons = lessonsIn(activeSubjects, mobileDay, viewedWeekNumber)
+
+    // Axtarışdan keçid: cari həftəyə qayıt, dərsi işıqlandır və ora sürüşdür.
+    useEffect(() => {
+        if (!jump || jump.n === lastJumpRef.current) {
+            return
+        }
+        lastJumpRef.current = jump.n
+        const now = new Date()
+        const monday = getMonday(now)
+        const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        const index = Math.min(6, Math.max(0, Math.round((midnight - monday) / 86400000)))
+        setViewedWeekStart(monday)
+        setMobileDay(days[index])
+        setHighlight({ subjectId: jump.subjectId, sequenceIndex: jump.sequenceIndex })
+        if (highlightTimeout.current) {
+            clearTimeout(highlightTimeout.current)
+        }
+        highlightTimeout.current = setTimeout(() => setHighlight(null), 3300)
+        requestAnimationFrame(() => {
+            highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+        })
+        return () => {
+            if (highlightTimeout.current) {
+                clearTimeout(highlightTimeout.current)
+            }
+        }
+    }, [jump])
 
     const requestTypeChange = (subject, lesson, sequenceIndex, newType) => {
         setPendingChange({
@@ -573,49 +628,6 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
 
     return (
         <div className='flex flex-col gap-[15px] pb-[30px]'>
-            <div className='grid grid-cols-1 gap-[10px] md:grid-cols-2'>
-                <div className='rounded-[8px] bg-[#FFF] p-[12px] shadow-sm'>
-                    <h2 className='mb-[8px] text-[15px] font-bold text-[#434140]'>Bugünkü dərslər</h2>
-                    {todayLessons.length === 0 ? (
-                        <p className='text-[13px] text-[#777]'>Bu gün dərs yoxdur.</p>
-                    ) : (
-                        <ul className='flex flex-col gap-[6px]'>
-                            {todayLessons.map(({ subject, lesson, sequenceIndex, type }) => {
-                                const start = toMinutes(getStartTime(lesson))
-                                const end = toMinutes(lesson.endTime || getStartTime(lesson))
-                                const state = nowMinutes < start ? 'gözləyir' : nowMinutes <= end ? 'indi' : 'bitib'
-                                return (
-                                    <li key={`${subject.id}-${sequenceIndex}`} className='flex items-center justify-between gap-[8px] rounded-[5px] bg-[#F7F3EC] px-[8px] py-[6px] text-[13px]'>
-                                        <span className='min-w-0 truncate'>
-                                            <strong>{getStartTime(lesson)}</strong> {subject.name}
-                                            <span className='text-[#777]'> • {typeLabels[type]}</span>
-                                        </span>
-                                        <span className={`shrink-0 rounded-full px-[8px] py-[2px] text-[12px] ${state === 'indi' ? 'bg-[#477A68] text-[#FFF]' : 'bg-[#EEE] text-[#555]'}`}>
-                                            {state}
-                                        </span>
-                                    </li>
-                                )
-                            })}
-                        </ul>
-                    )}
-                </div>
-                <div className='rounded-[8px] bg-[#FFF] p-[12px] shadow-sm'>
-                    <h2 className='mb-[8px] text-[15px] font-bold text-[#434140]'>Növbəti dərs</h2>
-                    {!nextLesson ? (
-                        <p className='text-[13px] text-[#777]'>Bu həftə başqa dərs qalmayıb.</p>
-                    ) : (
-                        <p className='text-[14px] text-[#333]'>
-                            <strong>{nextLesson.day}{nextLesson.isToday ? ' (bugün)' : ''}</strong>{' '}
-                            {getStartTime(nextLesson.lesson)} — {nextLesson.subject.name}{' '}
-                            <span className='text-[#777]'>({typeLabels[nextLesson.type]})</span>
-                            {[nextLesson.subject.teacher, nextLesson.subject.room].filter(Boolean).length > 0 && (
-                                <span className='text-[#777]'> • {[nextLesson.subject.teacher, nextLesson.subject.room].filter(Boolean).join(' • ')}</span>
-                            )}
-                        </p>
-                    )}
-                </div>
-            </div>
-
             {conflicts.length > 0 && (
                 <div className='rounded-[8px] border border-[#A65B46] bg-[#FCE5E0] p-[12px] text-[13px] text-[#6E3A2C]'>
                     <p className='mb-[6px] font-bold'>Vaxt toqquşması ({conflicts.length}):</p>
@@ -631,7 +643,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
             )}
 
             <div className={`flex flex-col gap-[15px] lg:flex-row ${sidebarOpen ? 'lg:gap-[15px]' : 'lg:gap-0'}`}>
-                <div className={`shrink-0 overflow-hidden transition-[width,opacity] duration-300 ease-in-out ${sidebarOpen ? 'w-full opacity-100 lg:w-[245px]' : 'hidden opacity-0 lg:block lg:h-auto lg:w-0'}`}>
+                <div className={`shrink-0 overflow-hidden transition-[width,opacity] duration-300 ease-in-out print:hidden ${sidebarOpen ? 'w-full opacity-100 lg:w-[245px]' : 'hidden opacity-0 lg:block lg:h-auto lg:w-0'}`}>
                     <SubjectMenu
                         subjects={subjects}
                         onRequestRemoveSubject={setPendingDeleteSubject}
@@ -651,20 +663,29 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                             onClick={toggleSidebar}
                             aria-label='Fənlərim panelini aç'
                             title='Fənlərim'
-                            className='fixed left-0 top-1/2 z-10 -translate-y-1/2 rounded-r-[8px] bg-[#434140] px-[8px] py-[14px] text-[18px] text-[#E7D8C6] shadow-md hover:bg-[#555250]'
+                            className='fixed left-0 top-1/2 z-10 -translate-y-1/2 rounded-r-[8px] bg-[#434140] px-[8px] py-[14px] text-[18px] text-[#E7D8C6] shadow-md hover:bg-[#555250] print:hidden'
                         >
                             <FiChevronsRight aria-hidden='true' />
                         </button>
                     )}
                     <div className='mb-[10px] flex items-center justify-between'>
-                        <div>
+                        <div className='print:hidden'>
                             <h1 className='text-[22px] font-bold text-[#434140]'>Həftəlik cədvəl</h1>
                             <p className='text-[13px] text-[#666]'>
                                 Bu həftə: <strong>{lectureTotal} müh.</strong>, <strong>{seminarTotal} sem.</strong>
                             </p>
                         </div>
-                        <div className='flex flex-col items-end gap-[5px]'>
+                        <div className='flex flex-col items-end gap-[5px] print:hidden'>
                             <div className='flex items-stretch overflow-hidden rounded-[6px] border border-[#434140] text-[13px]'>
+                                <button
+                                    type='button'
+                                    onClick={() => setIsDayInfoOpen(true)}
+                                    aria-label='Yaxınlıqdakılar'
+                                    title='Yaxınlıqdakılar'
+                                    className='flex items-center border-r border-[#DDD] px-[10px] py-[5px] text-[15px] text-[#434140] hover:bg-[#EEE]'
+                                >
+                                    <FiCalendar aria-hidden='true' />
+                                </button>
                                 <button
                                     type='button'
                                     onClick={() => goToWeek(addWeeks(viewedWeekStart, -1))}
@@ -712,7 +733,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                         </div>
                     </div>
 
-                    <div className='mb-[10px] flex gap-[6px] overflow-x-auto rounded-[8px] bg-[#FFF] p-[8px] shadow-sm lg:hidden'>
+                    <div className='mb-[10px] flex gap-[6px] overflow-x-auto rounded-[8px] bg-[#FFF] p-[8px] shadow-sm lg:hidden print:hidden'>
                         {days.map((day) => (
                             <button
                                 key={day}
@@ -724,7 +745,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                             </button>
                         ))}
                     </div>
-                    <div className='flex flex-col gap-[8px] lg:hidden'>
+                    <div className='flex flex-col gap-[8px] lg:hidden print:hidden'>
                         {mobileLessons.length === 0 ? (
                             <p className='rounded-[8px] bg-[#FFF] p-[12px] text-[13px] text-[#777] shadow-sm'>
                                 {mobileDay} günü dərs yoxdur.
@@ -742,8 +763,14 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                         )}
                     </div>
 
-                    <div className='hidden overflow-x-auto rounded-[8px] bg-[#FFF] shadow-sm lg:block'>
-                        <div className='min-w-[1050px]'>
+                    <div className='mb-[10px] hidden print:block'>
+                        <p className='print-exact font-["Trirong"] text-[20px] font-bold text-[#A65B46]'>AcademicSchedule</p>
+                        <p className='text-[13px] text-[#434140]'>
+                            Həftəlik cədvəl • {viewedWeekType.mode === 'upper-week' ? 'Üst həftə' : 'Alt həftə'}
+                        </p>
+                    </div>
+                    <div className='hidden overflow-x-auto rounded-[8px] bg-[#FFF] shadow-sm lg:block print:block print:overflow-hidden print:shadow-none'>
+                        <div className='min-w-[1050px] print:min-w-0 print:w-full'>
                             <div className='grid grid-cols-[65px_repeat(7,minmax(130px,1fr))] border-b border-[#DDD]'>
                                 <div className='border-b border-[#DDD] p-[8px]' />
                                 {weekDays.map(({ name, date }) => (
@@ -754,15 +781,17 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                 ))}
                             </div>
 
-                            <div className='grid grid-cols-[65px_repeat(7,minmax(130px,1fr))]'>
-                                <div className='relative' style={{ height: `${hours.length * HOUR_PX}px` }}>
+                            <div className='grid grid-cols-[65px_repeat(7,minmax(130px,1fr))] border-b border-[#DDD]'>
+                                <div>
                                     {hours.map((hour) => (
                                         <div
                                             key={hour}
-                                            className='absolute right-[8px] text-right text-[12px] text-[#777]'
-                                            style={{ top: `${(hour - hours[0]) * HOUR_PX - 9}px` }}
+                                            className='relative'
+                                            style={{ height: `${HOUR_PX}px` }}
                                         >
-                                            {String(hour).padStart(2, '0')}:00
+                                            <div className='absolute right-[8px] top-[5px] text-right text-[12px] tabular-nums text-[#999]'>
+                                                {String(hour).padStart(2, '0')}:00
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -778,6 +807,10 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                             key={name}
                                             className={`relative border-l border-[#DDD] ${isTodayColumn ? 'bg-[#FCE5E0]/50' : ''}`}
                                             style={{ height: `${hours.length * HOUR_PX}px` }}
+                                            onContextMenu={(event) => handleGridContextMenu(event, name)}
+                                            onMouseMove={(event) => handleGridHover(event, name)}
+                                            onMouseLeave={() => setHoverSlot(null)}
+                                            title='Sağ klik: yeni fənn'
                                         >
                                             {hours.map((hour) => (
                                                 <div
@@ -786,17 +819,25 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                                     style={{ top: `${(hour - hours[0]) * HOUR_PX}px` }}
                                                 />
                                             ))}
-                                            {positioned.map(({ subject, lesson, sequenceIndex, lane, laneCount, start, end }) => (
+                                            {positioned.map(({ subject, lesson, sequenceIndex, lane, laneCount, start, end }) => {
+                                                const isHighlighted = highlight
+                                                    && highlight.subjectId === subject.id
+                                                    && highlight.sequenceIndex === sequenceIndex
+                                                return (
                                                 <div
                                                     key={`${subject.id}-${sequenceIndex}`}
+                                                    ref={isHighlighted ? highlightRef : null}
                                                     className='absolute'
                                                     style={{
-                                                        top: `${((start - hours[0] * 60) / 60) * HOUR_PX + 3}px`,
-                                                        height: `${Math.max(((end - start) / 60) * HOUR_PX - 6, 60)}px`,
+                                                        top: `${((start - hours[0] * 60) / 60) * HOUR_PX}px`,
+                                                        height: `${Math.max(((end - start) / 60) * HOUR_PX, 60)}px`,
                                                         left: `calc(${(lane / laneCount) * 100}% + 3px)`,
                                                         width: `calc(${100 / laneCount}% - 6px)`,
                                                     }}
                                                 >
+                                                    {isHighlighted && (
+                                                        <div className='highlight-flash pointer-events-none absolute inset-0 z-10 rounded-[5px] ring-2 ring-[#A65B46]' />
+                                                    )}
                                                     <CalendarEvent
                                                         subject={subject}
                                                         lesson={lesson}
@@ -804,15 +845,27 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                                         onRequestTypeChange={requestTypeChange}
                                                     />
                                                 </div>
-                                            ))}
+                                                )
+                                            })}
                                             {showNowLine && (
                                                 <div
-                                                    className='absolute left-0 right-0 z-10 flex items-center'
+                                                    className='absolute left-0 right-0 z-10'
                                                     style={{ top: `${nowY}px` }}
                                                     title={`İndi: ${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`}
                                                 >
-                                                    <div className='h-[9px] w-[9px] shrink-0 rounded-full bg-red-500' />
                                                     <div className='h-[2px] w-full bg-red-500' />
+                                                    <div className='absolute -top-[3.5px] left-0 h-[9px] w-[9px] rounded-full bg-red-500' />
+                                                </div>
+                                            )}
+                                            {hoverSlot && hoverSlot.day === name && (
+                                                <div
+                                                    className='pointer-events-none absolute left-0 right-0 z-20'
+                                                    style={{ top: `${((hoverSlot.minutes - hours[0] * 60) / 60) * HOUR_PX}px` }}
+                                                >
+                                                    <div className='h-[2px] w-full bg-gray-400 opacity-40' />
+                                                    <span className='absolute -top-[8px] right-0 z-10 rounded-[4px] bg-[#D9D9D9] px-[5px] py-[1px] text-[11px] font-medium tabular-nums text-[#434140]'>
+                                                        {formatMinutes(hoverSlot.minutes)}
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>
@@ -851,6 +904,15 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                 onCancel={() => setPendingDeleteSubject(null)}
             />
 
+            <DayInfoModal
+                open={isDayInfoOpen}
+                todayLessons={todayLessons}
+                tomorrowLessons={tomorrowLessons}
+                tomorrowTitle={`Sabah (${tomorrowDayName})`}
+                nowMinutes={nowMinutes}
+                onClose={() => setIsDayInfoOpen(false)}
+            />
+
             {editingSubject && (
                 <NewSubjectModal
                     initialSubject={editingSubject}
@@ -870,6 +932,17 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                     onSubmit={(copied) => {
                         onAddSubject(copied)
                         setCopyingSubject(null)
+                    }}
+                />
+            )}
+
+            {pendingSlot && (
+                <NewSubjectModal
+                    preset={[pendingSlot]}
+                    onClose={() => setPendingSlot(null)}
+                    onSubmit={(created) => {
+                        onAddSubject(created)
+                        setPendingSlot(null)
                     }}
                 />
             )}
