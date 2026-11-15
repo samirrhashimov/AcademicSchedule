@@ -36,13 +36,53 @@ const loadSubjects = () => {
   }
 }
 
+const THEME_KEY = 'academic-schedule-theme'
+
+const getInitialTheme = () => {
+  try {
+    const saved = localStorage.getItem(THEME_KEY)
+    if (saved === 'light' || saved === 'dark') {
+      return saved
+    }
+  } catch {
+    // yaddaş əlçatan deyilsə sistem rənginə baxılır
+  }
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
 function App() {
   const [subjects, setSubjects] = useState(loadSubjects)
   const [jump, setJump] = useState(null)
+  const [theme, setTheme] = useState(getInitialTheme)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects))
   }, [subjects])
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+    try {
+      localStorage.setItem(THEME_KEY, theme)
+    } catch {
+      // yaddaş əlçatan deyilsə sessiya ilə qalır
+    }
+  }, [theme])
+
+  // Çap həmişə açıq rejimdə çıxır.
+  useEffect(() => {
+    const handleBeforePrint = () => document.documentElement.classList.remove('dark')
+    const handleAfterPrint = () => {
+      document.documentElement.classList.toggle('dark', theme === 'dark')
+    }
+    window.addEventListener('beforeprint', handleBeforePrint)
+    window.addEventListener('afterprint', handleAfterPrint)
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint)
+      window.removeEventListener('afterprint', handleAfterPrint)
+    }
+  }, [theme])
+
+
 
   const addSubject = (subject) => {
     try {
@@ -91,6 +131,8 @@ function App() {
         subjects={subjects}
         onAddSubject={addSubject}
         onSelectLesson={(selection) => setJump({ ...selection, n: Date.now() })}
+        theme={theme}
+        onSelectTheme={setTheme}
       />
       <Dashboard
         subjects={subjects}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiCalendar, FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiCopy, FiEdit2, FiTrash2, FiX } from 'react-icons/fi'
+import { FiBookOpen, FiCalendar, FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiCopy, FiEdit2, FiMapPin, FiTrash2, FiUser, FiX } from 'react-icons/fi'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 import DayInfoModal from './DayInfoModal'
@@ -224,7 +224,7 @@ const PrintSchedules = ({ subjects, weekState }) => {
                                                     width: `calc(${100 / laneCount}% - 6px)`,
                                                 }}
                                             >
-                                                <div className={`print-exact h-full overflow-hidden rounded-[5px] border-l-[4px] p-[7px] text-[13px] ${type === 'lecture' ? 'border-[#A65B46] bg-[#FCE5E0]' : 'border-[#477A68] bg-[#E3F1EC]'}`}>
+                                                <div className={`print-exact h-full overflow-hidden rounded-[5px] border-l-[4px] p-[7px] text-[13px] text-[#333] ${type === 'lecture' ? 'border-[#A65B46] bg-[#FCE5E0]' : 'border-[#477A68] bg-[#E3F1EC]'}`}>
                                                     <p className='font-bold'>{getStartTime(lesson)} - {lesson.endTime || 'növbəti saat'}</p>
                                                     <p className='truncate font-medium'>{subject.name}</p>
                                                     <p className='text-[12px] font-medium text-[#666]'>{type === 'lecture' ? 'Mühazirə' : 'Seminar'}</p>
@@ -294,10 +294,10 @@ const findConflicts = (activeSubjects) => {
 }
 
 const SubjectMenu = ({ subjects, onRequestRemoveSubject, onEditSubject, onDuplicateSubject, onHideSidebar }) => (
-    <aside className='w-full rounded-[8px] bg-[#434140] p-[15px] text-[#FFF] lg:w-[245px]'>
-        <div className='mb-[15px] flex items-center justify-between gap-[8px]'>
+    <aside className='w-full rounded-[12px] bg-[#434140] p-[16px] text-[#FFF] lg:w-[250px]'>
+        <div className='mb-[12px] flex items-center justify-between gap-[8px]'>
             <span className='flex items-center gap-[8px]'>
-                <span className='text-[18px] font-bold'>Fənlərim</span>
+                <span className='text-[17px] font-bold'>Fənlərim</span>
                 <span className='rounded-full bg-[#A65B46] px-[8px] py-[2px] text-[12px] font-medium'>{subjects.length}</span>
             </span>
             <button
@@ -305,59 +305,64 @@ const SubjectMenu = ({ subjects, onRequestRemoveSubject, onEditSubject, onDuplic
                 onClick={onHideSidebar}
                 aria-label='Paneli gizlət'
                 title='Paneli gizlət'
-                className='p-[4px] text-[20px] leading-none text-[#E7D8C6] hover:text-[#FFF]'
+                className='rounded-full p-[6px] text-[18px] leading-none text-[#E7D8C6] hover:bg-[#555250]'
             >
                 <FiChevronsLeft aria-hidden='true' />
             </button>
         </div>
         {subjects.length === 0 ? (
-            <p className='text-[14px] text-[#DDD]'>Hələ fənn əlavə edilməyib.</p>
+            <div className='rounded-[8px] border border-dashed border-[#6B6862] p-[16px] text-center text-[13px] text-[#DDD]'>
+                Hələ fənn əlavə edilməyib.
+            </div>
         ) : (
-            <div className='flex flex-col gap-[8px]'>
+            <div className='flex flex-col gap-[10px]'>
                 {subjects.map((subject) => (
-                    <div key={subject.id} className='rounded-[6px] bg-[#FFF] p-[10px] text-[#333]'>
-                        <div className='flex items-start justify-between gap-[8px]'>
-                            <div className='min-w-0'>
-                                <p className='truncate font-medium'>{subject.name}</p>
-                                <p className='mt-[3px] text-[12px] text-[#777]'>
-                                    {subject.lectureCount} müh., {subject.seminarCount} sem.
-                                </p>
-                                {(subject.teacher || subject.room) && (
-                                    <p className='mt-[2px] text-[12px] text-[#777]'>
-                                        {subject.teacher && <span className='block truncate'>Müəllim: {subject.teacher}</span>}
-                                        {subject.room && <span className='block truncate'>Otaq: {subject.room}</span>}
-                                    </p>
-                                )}
-                            </div>
-                            <div className='flex shrink-0 flex-col gap-[6px]'>
-                                <button
-                                    type='button'
-                                    onClick={() => onEditSubject(subject)}
-                                    aria-label='Redaktə et'
-                                    title='Redaktə et'
-                                    className='rounded-[4px] bg-[#E3F1EC] p-[6px] text-[15px] leading-none text-[#477A68] hover:bg-[#D4E6DC]'
-                                >
-                                    <FiEdit2 aria-hidden='true' />
-                                </button>
-                                <button
-                                    type='button'
-                                    onClick={() => onDuplicateSubject(subject)}
-                                    aria-label='Dublikat yarat'
-                                    title='Dublikat yarat'
-                                    className='rounded-[4px] bg-[#EEE] p-[6px] text-[15px] leading-none text-[#555] hover:bg-[#DFDFDF]'
-                                >
-                                    <FiCopy aria-hidden='true' />
-                                </button>
-                                <button
-                                    type='button'
-                                    onClick={() => onRequestRemoveSubject(subject)}
-                                    aria-label='Fənni sil'
-                                    title='Fənni sil'
-                                    className='rounded-[4px] bg-[#FCE5E0] p-[6px] text-[15px] leading-none text-[#A65B46] hover:bg-[#F6D9D2]'
-                                >
-                                    <FiTrash2 aria-hidden='true' />
-                                </button>
-                            </div>
+                    <div key={subject.id} className='rounded-[8px] bg-[#FFF] p-[12px] text-[#333] dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
+                        <p className='truncate text-[14px] font-bold'>{subject.name}</p>
+                        <p className='mt-[6px] flex items-center gap-[6px] text-[12px] text-[#777] dark:text-[#A8A29E]'>
+                            <FiBookOpen aria-hidden='true' className='shrink-0' />
+                            <span>{subject.lectureCount} müh. • {subject.seminarCount} sem.</span>
+                        </p>
+                        {subject.teacher && (
+                            <p className='mt-[4px] flex items-center gap-[6px] text-[12px] text-[#777] dark:text-[#A8A29E]'>
+                                <FiUser aria-hidden='true' className='shrink-0' />
+                                <span className='truncate'>{subject.teacher}</span>
+                            </p>
+                        )}
+                        {subject.room && (
+                            <p className='mt-[4px] flex items-center gap-[6px] text-[12px] text-[#777] dark:text-[#A8A29E]'>
+                                <FiMapPin aria-hidden='true' className='shrink-0' />
+                                <span className='truncate'>Otaq: {subject.room}</span>
+                            </p>
+                        )}
+                        <div className='mt-[10px] flex items-center gap-[4px] border-t border-[#EEE] pt-[8px] dark:border-[#4A4440]'>
+                            <button
+                                type='button'
+                                onClick={() => onEditSubject(subject)}
+                                aria-label='Redaktə et'
+                                title='Redaktə et'
+                                className='flex flex-1 items-center justify-center rounded-[6px] p-[7px] text-[15px] leading-none text-[#477A68] hover:bg-[#E3F1EC] dark:text-[#7FB598] dark:hover:bg-[#33463C]'
+                            >
+                                <FiEdit2 aria-hidden='true' />
+                            </button>
+                            <button
+                                type='button'
+                                onClick={() => onDuplicateSubject(subject)}
+                                aria-label='Dublikat yarat'
+                                title='Dublikat yarat'
+                                className='flex flex-1 items-center justify-center rounded-[6px] p-[7px] text-[15px] leading-none text-[#555] hover:bg-[#EEE] dark:text-[#C9C2B8] dark:hover:bg-[#3E3833]'
+                            >
+                                <FiCopy aria-hidden='true' />
+                            </button>
+                            <button
+                                type='button'
+                                onClick={() => onRequestRemoveSubject(subject)}
+                                aria-label='Fənni sil'
+                                title='Fənni sil'
+                                className='flex flex-1 items-center justify-center rounded-[6px] p-[7px] text-[15px] leading-none text-[#A65B46] hover:bg-[#FCE5E0] dark:hover:bg-[#473431]'
+                            >
+                                <FiTrash2 aria-hidden='true' />
+                            </button>
                         </div>
                     </div>
                 ))}
@@ -374,7 +379,7 @@ const CalendarEvent = ({ subject, lesson, sequenceIndex, onRequestTypeChange, on
     <div
         onClick={() => onEditSubject(subject)}
         title='Redaktə etmək üçün kliklə'
-        className={`print-exact h-full cursor-pointer overflow-hidden rounded-[5px] border-l-[4px] p-[7px] text-[13px] transition-[filter] hover:brightness-95 ${
+        className={`print-exact h-full cursor-pointer overflow-hidden rounded-[5px] border-l-[4px] p-[7px] text-[13px] text-[#333] transition-[filter] hover:brightness-95 ${
         type === 'lecture'
             ? 'border-[#A65B46] bg-[#FCE5E0]'
             : 'border-[#477A68] bg-[#E3F1EC]'
@@ -395,7 +400,7 @@ const CalendarEvent = ({ subject, lesson, sequenceIndex, onRequestTypeChange, on
                 }
             }}
             aria-label={`${subject.name} üçün dərs tipi`}
-            className='mt-[3px] max-w-full bg-transparent text-[12px] font-medium outline-none'
+            className='mt-[3px] max-w-full bg-transparent text-[12px] font-medium text-[#333] outline-none'
         >
             <option value='lecture'>{typeLabels.lecture}</option>
             <option value='seminar'>{typeLabels.seminar}</option>
@@ -421,14 +426,14 @@ const TypeChangeDialog = ({ pending, onChoose, onCancel }) => {
             aria-modal='true'
             aria-labelledby='type-change-title'
         >
-            <div className='modal-card-in w-full max-w-[420px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl'>
-                <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px]'>
-                    <h2 id='type-change-title' className='text-[20px] font-bold text-[#434140]'>Dərs tipini dəyiş</h2>
+            <div className='modal-card-in w-full max-w-[420px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
+                <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px] dark:border-[#4A4440]'>
+                    <h2 id='type-change-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Dərs tipini dəyiş</h2>
                     <button
                         type='button'
                         onClick={onCancel}
                         aria-label='Bağla'
-                        className='flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#F1EFE9] text-[18px] text-[#434140] hover:bg-[#E4E0D6]'
+                        className='flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#F1EFE9] text-[18px] text-[#434140] hover:bg-[#E4E0D6] dark:bg-[#3A3632] dark:text-[#EDE8DF] dark:hover:bg-[#4A4440]'
                     >
                         <FiX aria-hidden='true' />
                     </button>
@@ -442,16 +447,23 @@ const TypeChangeDialog = ({ pending, onChoose, onCancel }) => {
                     <button
                         type='button'
                         onClick={() => onChoose('once')}
-                        className='rounded-[8px] border border-[#477A68] px-[10px] py-[12px] text-[14px] font-medium text-[#477A68] hover:bg-[#E3F1EC]'
+                        className='rounded-[8px] border border-[#477A68] px-[10px] py-[12px] text-[14px] font-medium text-[#477A68] hover:bg-[#E3F1EC] dark:text-[#7FB598] dark:hover:bg-[#35302C]'
                     >
                         Bir dəfəlik - yalnız bu həftəki dərs
                     </button>
                     <button
                         type='button'
                         onClick={() => onChoose('always')}
-                        className='rounded-[8px] bg-[#434140] px-[10px] py-[12px] text-[14px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
+                        className='rounded-[8px] bg-[#434140] px-[10px] py-[12px] text-[14px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
                     >
                         Həmişə - bu gündən etibarən nisbətlə davam etsin
+                    </button>
+                    <button
+                        type='button'
+                        onClick={onCancel}
+                        className='rounded-[8px] px-[10px] py-[12px] text-[14px] text-[#777] hover:bg-[#EEE] dark:text-[#A8A29E] dark:hover:bg-[#3E3833]'
+                    >
+                        Ləğv et
                     </button>
                 </div>
             </div>
@@ -473,14 +485,14 @@ const WeekTypeChangeDialog = ({ pending, currentLabel, onChoose, onCancel }) => 
             aria-modal='true'
             aria-labelledby='week-type-change-title'
         >
-            <div className='modal-card-in w-full max-w-[420px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl'>
-                <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px]'>
-                    <h2 id='week-type-change-title' className='text-[20px] font-bold text-[#434140]'>Həftənin tipini dəyiş</h2>
+            <div className='modal-card-in w-full max-w-[420px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
+                <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px] dark:border-[#4A4440]'>
+                    <h2 id='week-type-change-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Həftənin tipini dəyiş</h2>
                     <button
                         type='button'
                         onClick={onCancel}
                         aria-label='Bağla'
-                        className='flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#F1EFE9] text-[18px] text-[#434140] hover:bg-[#E4E0D6]'
+                        className='flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#F1EFE9] text-[18px] text-[#434140] hover:bg-[#E4E0D6] dark:bg-[#3A3632] dark:text-[#EDE8DF] dark:hover:bg-[#4A4440]'
                     >
                         <FiX aria-hidden='true' />
                     </button>
@@ -493,16 +505,23 @@ const WeekTypeChangeDialog = ({ pending, currentLabel, onChoose, onCancel }) => 
                     <button
                         type='button'
                         onClick={() => onChoose('once')}
-                        className='rounded-[8px] border border-[#477A68] px-[10px] py-[12px] text-[14px] font-medium text-[#477A68] hover:bg-[#E3F1EC]'
+                        className='rounded-[8px] border border-[#477A68] px-[10px] py-[12px] text-[14px] font-medium text-[#477A68] hover:bg-[#E3F1EC] dark:text-[#7FB598] dark:hover:bg-[#35302C]'
                     >
                         İstisna - yalnız bu həftə
                     </button>
                     <button
                         type='button'
                         onClick={() => onChoose('always')}
-                        className='rounded-[8px] bg-[#434140] px-[10px] py-[12px] text-[14px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
+                        className='rounded-[8px] bg-[#434140] px-[10px] py-[12px] text-[14px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
                     >
                         Həmişə - bu həftədən etibarən o sıra ilə davam etsin
+                    </button>
+                    <button
+                        type='button'
+                        onClick={onCancel}
+                        className='rounded-[8px] px-[10px] py-[12px] text-[14px] text-[#777] hover:bg-[#EEE] dark:text-[#A8A29E] dark:hover:bg-[#3E3833]'
+                    >
+                        Ləğv et
                     </button>
                 </div>
             </div>
@@ -524,14 +543,14 @@ const DeleteConfirmDialog = ({ subject, onConfirm, onCancel }) => {
             aria-modal='true'
             aria-labelledby='delete-confirm-title'
         >
-            <div className='modal-card-in w-full max-w-[380px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl'>
-                <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px]'>
-                    <h2 id='delete-confirm-title' className='text-[20px] font-bold text-[#434140]'>Fənni sil</h2>
+            <div className='modal-card-in w-full max-w-[380px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
+                <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px] dark:border-[#4A4440]'>
+                    <h2 id='delete-confirm-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Fənni sil</h2>
                     <button
                         type='button'
                         onClick={onCancel}
                         aria-label='Bağla'
-                        className='flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#F1EFE9] text-[18px] text-[#434140] hover:bg-[#E4E0D6]'
+                        className='flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#F1EFE9] text-[18px] text-[#434140] hover:bg-[#E4E0D6] dark:bg-[#3A3632] dark:text-[#EDE8DF] dark:hover:bg-[#4A4440]'
                     >
                         <FiX aria-hidden='true' />
                     </button>
@@ -550,7 +569,7 @@ const DeleteConfirmDialog = ({ subject, onConfirm, onCancel }) => {
                     <button
                         type='button'
                         onClick={onCancel}
-                        className='rounded-[8px] px-[10px] py-[12px] text-[14px] text-[#777] hover:bg-[#EEE]'
+                        className='rounded-[8px] px-[10px] py-[12px] text-[14px] text-[#777] hover:bg-[#EEE] dark:text-[#A8A29E] dark:hover:bg-[#3E3833]'
                     >
                         Ləğv et
                     </button>
@@ -778,7 +797,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
             )}
 
             <div className={`flex flex-col gap-[15px] lg:flex-row ${sidebarOpen ? 'lg:gap-[15px]' : 'lg:gap-0'}`}>
-                <div className={`no-print shrink-0 overflow-hidden transition-[width,opacity] duration-300 ease-in-out ${sidebarOpen ? 'w-full opacity-100 lg:w-[245px]' : 'hidden opacity-0 lg:block lg:h-auto lg:w-0'}`}>
+                <div className={`no-print shrink-0 overflow-hidden transition-[width,opacity] duration-300 ease-in-out ${sidebarOpen ? 'w-full opacity-100 lg:w-[250px]' : 'hidden opacity-0 lg:block lg:h-auto lg:w-0'}`}>
                     <SubjectMenu
                         subjects={subjects}
                         onRequestRemoveSubject={setPendingDeleteSubject}
@@ -798,26 +817,26 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                             onClick={toggleSidebar}
                             aria-label='Fənlərim panelini aç'
                             title='Fənlərim'
-                            className='no-print fixed left-0 top-1/2 z-10 -translate-y-1/2 rounded-r-[8px] bg-[#434140] px-[8px] py-[14px] text-[18px] text-[#E7D8C6] shadow-md hover:bg-[#555250]'
+                            className='no-print fixed left-0 top-1/2 z-10 -translate-y-1/2 rounded-r-[8px] bg-[#434140] px-[8px] py-[14px] text-[18px] text-[#E7D8C6] shadow-md hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
                         >
                             <FiChevronsRight aria-hidden='true' />
                         </button>
                     )}
                     <div className='mb-[10px] flex items-center justify-between'>
                         <div className='print:hidden'>
-                            <h1 className='text-[22px] font-bold text-[#434140]'>Həftəlik cədvəl</h1>
-                            <p className='text-[13px] text-[#666]'>
+                            <h1 className='text-[22px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Həftəlik cədvəl</h1>
+                            <p className='text-[13px] text-[#666] dark:text-[#A8A29E]'>
                                 Bu həftə: <strong>{lectureTotal} müh.</strong>, <strong>{seminarTotal} sem.</strong>
                             </p>
                         </div>
                         <div className='no-print flex flex-col items-end gap-[5px]'>
-                            <div className='flex items-stretch overflow-hidden rounded-[6px] border border-[#434140] text-[13px]'>
+                            <div className='flex items-stretch overflow-hidden rounded-[6px] border border-[#434140] text-[13px] dark:border-[#55504A]'>
                                 <button
                                     type='button'
                                     onClick={() => setIsDayInfoOpen(true)}
                                     aria-label='Yaxınlıqdakılar'
                                     title='Yaxınlıqdakılar'
-                                    className='flex items-center border-r border-[#DDD] px-[10px] py-[5px] text-[15px] text-[#434140] hover:bg-[#EEE]'
+                                    className='flex items-center border-r border-[#DDD] px-[10px] py-[5px] text-[15px] text-[#434140] hover:bg-[#EEE] dark:border-[#4A4440] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
                                 >
                                     <FiCalendar aria-hidden='true' />
                                 </button>
@@ -826,7 +845,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                     onClick={() => goToWeek(addWeeks(viewedWeekStart, -1))}
                                     aria-label='Əvvəlki həftə'
                                     title='Əvvəlki həftə'
-                                    className='flex items-center px-[10px] py-[5px] text-[15px] text-[#434140] hover:bg-[#EEE]'
+                                    className='flex items-center px-[10px] py-[5px] text-[15px] text-[#434140] hover:bg-[#EEE] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
                                 >
                                     <FiChevronLeft aria-hidden='true' />
                                 </button>
@@ -834,7 +853,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                     <button
                                         type='button'
                                         onClick={() => goToWeek(currentWeekStart)}
-                                        className='border-x border-[#DDD] px-[12px] py-[5px] font-medium text-[#434140] hover:bg-[#EEE]'
+                                        className='border-x border-[#DDD] px-[12px] py-[5px] font-medium text-[#434140] hover:bg-[#EEE] dark:border-[#4A4440] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
                                     >
                                         Bu gün
                                     </button>
@@ -844,22 +863,22 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                     onClick={() => goToWeek(addWeeks(viewedWeekStart, 1))}
                                     aria-label='Növbəti həftə'
                                     title='Növbəti həftə'
-                                    className='flex items-center px-[10px] py-[5px] text-[15px] text-[#434140] hover:bg-[#EEE]'
+                                    className='flex items-center px-[10px] py-[5px] text-[15px] text-[#434140] hover:bg-[#EEE] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
                                 >
                                     <FiChevronRight aria-hidden='true' />
                                 </button>
                             </div>
                             <div className='flex items-center gap-[6px]'>
                                 <div className='flex overflow-hidden rounded-[5px] border border-[#A65B46] text-[12px]'>
-                                    <button type='button' onClick={() => requestWeekModeChange('upper-week')} className={`px-[10px] py-[5px] ${viewedMode === 'upper-week' ? 'bg-[#A65B46] font-bold text-[#FFF] hover:bg-[#96543F]' : 'bg-[#FFF] text-[#A65B46] hover:bg-[#F7F3EC]'}`}>Üst həftə</button>
-                                    <button type='button' onClick={() => requestWeekModeChange('lower-week')} className={`px-[10px] py-[5px] ${viewedMode === 'lower-week' ? 'bg-[#A65B46] font-bold text-[#FFF] hover:bg-[#96543F]' : 'bg-[#FFF] text-[#A65B46] hover:bg-[#F7F3EC]'}`}>Alt həftə</button>
+                                    <button type='button' onClick={() => requestWeekModeChange('upper-week')} className={`px-[10px] py-[5px] ${viewedMode === 'upper-week' ? 'bg-[#A65B46] font-bold text-[#FFF] hover:bg-[#96543F]' : 'bg-[#FFF] text-[#A65B46] hover:bg-[#F7F3EC] dark:bg-[#2A2724] dark:hover:bg-[#3E3833]'}`}>Üst həftə</button>
+                                    <button type='button' onClick={() => requestWeekModeChange('lower-week')} className={`px-[10px] py-[5px] ${viewedMode === 'lower-week' ? 'bg-[#A65B46] font-bold text-[#FFF] hover:bg-[#96543F]' : 'bg-[#FFF] text-[#A65B46] hover:bg-[#F7F3EC] dark:bg-[#2A2724] dark:hover:bg-[#3E3833]'}`}>Alt həftə</button>
                                 </div>
                                 {viewedWeekType.isOverride && (
                                     <button
                                         type='button'
                                         onClick={clearWeekOverride}
                                         title='Avtomatik növbələşməyə qayıt'
-                                        className='rounded-[5px] border border-[#AAA] px-[8px] py-[4px] text-[12px] text-[#434140] hover:bg-[#EEE]'
+                                        className='rounded-[5px] border border-[#AAA] px-[8px] py-[4px] text-[12px] text-[#434140] hover:bg-[#EEE] dark:border-[#55504A] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
                                     >
                                         Avto
                                     </button>
@@ -868,13 +887,13 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                         </div>
                     </div>
 
-                    <div className='no-print mb-[10px] flex gap-[6px] overflow-x-auto rounded-[8px] bg-[#FFF] p-[8px] shadow-sm lg:hidden'>
+                    <div className='no-print mb-[10px] flex gap-[6px] overflow-x-auto rounded-[8px] bg-[#FFF] p-[8px] shadow-sm lg:hidden dark:bg-[#2A2724]'>
                         {days.map((day) => (
                             <button
                                 key={day}
                                 type='button'
                                 onClick={() => setMobileDay(day)}
-                                className={`shrink-0 rounded-[5px] px-[10px] py-[6px] text-[12px] ${mobileDay === day ? 'bg-[#434140] text-[#FFF] hover:bg-[#555250]' : 'bg-[#EEE] text-[#333] hover:bg-[#DFDFDF]'}`}
+                                className={`shrink-0 rounded-[5px] px-[10px] py-[6px] text-[12px] ${mobileDay === day ? 'bg-[#434140] text-[#FFF] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]' : 'bg-[#EEE] text-[#333] hover:bg-[#DFDFDF] dark:bg-[#3A3632] dark:text-[#E8E2D9] dark:hover:bg-[#4A4440]'}`}
                             >
                                 {day}
                             </button>
@@ -882,7 +901,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                     </div>
                     <div key={mobileDay} className='week-fade no-print flex flex-col gap-[8px] lg:hidden'>
                         {mobileLessons.length === 0 ? (
-                            <p className='rounded-[8px] bg-[#FFF] p-[12px] text-[13px] text-[#777] shadow-sm'>
+                            <p className='rounded-[8px] bg-[#FFF] p-[12px] text-[13px] text-[#777] shadow-sm dark:bg-[#2A2724] dark:text-[#A8A29E]'>
                                 {mobileDay} günü dərs yoxdur.
                             </p>
                         ) : (
@@ -904,19 +923,19 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                         <p className='text-[13px] text-[#434140]'>Həftəlik cədvəl</p>
                     </div>
                     <PrintSchedules subjects={subjects} weekState={weekState} />
-                    <div key={toDayKey(viewedWeekStart)} className='week-fade no-print hidden overflow-x-auto rounded-[8px] bg-[#FFF] shadow-sm lg:block'>
+                    <div key={toDayKey(viewedWeekStart)} className='week-fade no-print hidden overflow-x-auto rounded-[8px] bg-[#FFF] shadow-sm lg:block dark:bg-[#2A2724]'>
                         <div className='min-w-[1050px]'>
-                            <div className='grid grid-cols-[52px_repeat(7,minmax(130px,1fr))] border-b border-[#DDD]'>
-                                <div className='border-b border-[#DDD] p-[8px]' />
+                            <div className='grid grid-cols-[52px_repeat(7,minmax(130px,1fr))] border-b border-[#DDD] dark:border-[#4A4440]'>
+                                <div className='border-b border-[#DDD] p-[8px] dark:border-[#4A4440]' />
                                 {weekDays.map(({ name, date }) => (
-                                    <div key={name} className={`border-r border-[#DDD] p-[8px] text-center ${date.toDateString() === today.toDateString() ? 'bg-[#FCE5E0]' : ''}`}>
-                                        <p className='text-[12px] text-[#666]'>{name}</p>
-                                        <p className='font-bold text-[#434140]'>{date.getDate()}</p>
+                                    <div key={name} className={`border-r border-[#DDD] p-[8px] text-center dark:border-[#4A4440] ${date.toDateString() === today.toDateString() ? 'bg-[#FCE5E0] dark:bg-[#FCE5E0]/20' : ''}`}>
+                                        <p className='text-[12px] text-[#666] dark:text-[#A8A29E]'>{name}</p>
+                                        <p className='font-bold text-[#434140] dark:text-[#EDE8DF]'>{date.getDate()}</p>
                                     </div>
                                 ))}
                             </div>
 
-                            <div className='grid grid-cols-[52px_repeat(7,minmax(130px,1fr))] border-b border-[#DDD]'>
+                            <div className='grid grid-cols-[52px_repeat(7,minmax(130px,1fr))] border-b border-[#DDD] dark:border-[#4A4440]'>
                                 <div>
                                     {hours.map((hour) => (
                                         <div
@@ -924,7 +943,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                             className='relative'
                                             style={{ height: `${HOUR_PX}px` }}
                                         >
-                                            <div className='absolute right-[8px] top-[5px] text-right text-[12px] tabular-nums text-[#999]'>
+                                            <div className='absolute right-[8px] top-[5px] text-right text-[12px] tabular-nums text-[#999] dark:text-[#A8A29E]'>
                                                 {String(hour).padStart(2, '0')}:00
                                             </div>
                                         </div>
@@ -940,7 +959,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                     return (
                                         <div
                                             key={name}
-                                            className={`relative border-l border-[#DDD] ${isTodayColumn ? 'bg-[#FCE5E0]/50' : ''}`}
+                                            className={`relative border-l border-[#DDD] dark:border-[#3A3632] ${isTodayColumn ? 'bg-[#FCE5E0]/50 dark:bg-[#FCE5E0]/10' : ''}`}
                                             style={{ height: `${hours.length * HOUR_PX}px` }}
                                             onContextMenu={(event) => handleGridContextMenu(event, name)}
                                             onMouseMove={(event) => handleGridHover(event, name)}
@@ -950,7 +969,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                             {hours.map((hour) => (
                                                 <div
                                                     key={hour}
-                                                    className='absolute left-0 right-0 border-t border-[#DDD]'
+                                                    className='absolute left-0 right-0 border-t border-[#DDD] dark:border-[#3A3632]'
                                                     style={{ top: `${(hour - hours[0]) * HOUR_PX}px` }}
                                                 />
                                             ))}
@@ -1011,7 +1030,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                         </div>
                     </div>
                     {subjects.length === 0 && (
-                        <div className='mt-[15px] rounded-[8px] border border-dashed border-[#A65B46] p-[20px] text-center text-[#555]'>
+                        <div className='mt-[15px] rounded-[8px] border border-dashed border-[#A65B46] p-[20px] text-center text-[#555] dark:text-[#C9C2B8]'>
                             Başlamaq üçün “+ Yeni Fənn” düyməsinə kliklə.
                         </div>
                     )}

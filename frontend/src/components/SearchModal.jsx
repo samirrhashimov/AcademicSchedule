@@ -38,14 +38,14 @@ const SearchModal = ({ subjects, onClose, onSelectLesson }) => {
       aria-modal='true'
       aria-labelledby='search-title'
     >
-      <div className='modal-card-in flex max-h-[90vh] w-full max-w-[520px] flex-col overflow-hidden rounded-[14px] bg-[#FFF] text-[#333] shadow-xl'>
-        <div className='flex shrink-0 items-center justify-between border-b border-[#EEE] bg-[#FFF] px-[24px] py-[18px]'>
-          <h2 id='search-title' className='text-[20px] font-bold text-[#434140]'>Axtarış</h2>
+      <div className='modal-card-in flex max-h-[90vh] w-full max-w-[520px] flex-col overflow-hidden rounded-[14px] bg-[#FFF] text-[#333] shadow-xl dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
+        <div className='flex shrink-0 items-center justify-between border-b border-[#EEE] bg-[#FFF] px-[24px] py-[18px] dark:border-[#4A4440] dark:bg-[#2A2724]'>
+          <h2 id='search-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Axtarış</h2>
           <button
             type='button'
             onClick={onClose}
             aria-label='Bağla'
-            className='flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#F1EFE9] text-[18px] text-[#434140] hover:bg-[#E4E0D6]'
+            className='flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#F1EFE9] text-[18px] text-[#434140] hover:bg-[#E4E0D6] dark:bg-[#3A3632] dark:text-[#EDE8DF] dark:hover:bg-[#4A4440]'
           >
             <FiX aria-hidden='true' />
           </button>
@@ -59,21 +59,21 @@ const SearchModal = ({ subjects, onClose, onSelectLesson }) => {
             placeholder='Fənn, müəllim, otaq…'
             aria-label='Fənn axtarışı'
             autoFocus
-            className='w-full rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] p-[10px] text-[14px] outline-none focus:border-[#A65B46]'
+            className='w-full rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] p-[10px] text-[14px] outline-none focus:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B] dark:text-[#E8E2D9]'
           />
         </div>
 
         <div className='min-h-[100px] flex-1 overflow-y-auto p-[24px]'>
           {!normalizedQuery ? (
-            <p className='text-[14px] text-[#777]'>Axtarmaq üçün yuxarıda yazın.</p>
+            <p className='text-[14px] text-[#777] dark:text-[#A8A29E]'>Axtarmaq üçün yuxarıda yazın.</p>
           ) : results.length === 0 ? (
-            <p className='text-[14px] text-[#777]'>“{query.trim()}” üzrə nəticə yoxdur.</p>
+            <p className='text-[14px] text-[#777] dark:text-[#A8A29E]'>“{query.trim()}” üzrə nəticə yoxdur.</p>
           ) : (
             <div className='flex flex-col gap-[10px]'>
               {results.map((subject) => (
-                <div key={subject.id} className='rounded-[8px] border border-[#EEE] bg-[#FFF] p-[12px]'>
-                  <p className='truncate text-[14px] font-bold text-[#434140]'>{subject.name}</p>
-                  <p className='mt-[2px] text-[12px] text-[#777]'>
+                <div key={subject.id} className='rounded-[8px] border border-[#EEE] bg-[#FFF] p-[12px] dark:border-[#4A4440] dark:bg-[#35302C]'>
+                  <p className='truncate text-[14px] font-bold text-[#434140] dark:text-[#EDE8DF]'>{subject.name}</p>
+                  <p className='mt-[2px] text-[12px] text-[#777] dark:text-[#A8A29E]'>
                     {[subject.teacher && `Müəllim: ${subject.teacher}`, subject.room && `Otaq: ${subject.room}`, frequencyLabels[subject.frequency]].filter(Boolean).join(' • ')}
                   </p>
                   <ul className='mt-[8px] flex flex-col gap-[6px]'>
@@ -89,7 +89,7 @@ const SearchModal = ({ subjects, onClose, onSelectLesson }) => {
                               onClose()
                             }}
                             title='Cədvəldə göstər'
-                            className='flex w-full items-center justify-between gap-[8px] rounded-[6px] bg-[#F7F3EC] px-[10px] py-[7px] text-left text-[13px] hover:bg-[#EFE6D2]'
+                            className='flex w-full items-center justify-between gap-[8px] rounded-[6px] bg-[#F7F3EC] px-[10px] py-[7px] text-left text-[13px] hover:bg-[#EFE6D2] dark:bg-[#201D1B] dark:hover:bg-[#2E2A26]'
                           >
                             <span className='truncate'>
                               <strong>{lesson.day}</strong> {lesson.startTime}–{lesson.endTime}

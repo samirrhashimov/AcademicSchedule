@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { FiPrinter, FiSearch } from 'react-icons/fi'
+import { FiPrinter, FiSearch, FiSettings } from 'react-icons/fi'
 import NewSubjectModal from './NewSubjectModal'
 import SearchModal from './SearchModal'
+import SettingsModal from './SettingsModal'
 
-const Navbar = ({ subjects, onAddSubject, onSelectLesson }) => {
+const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   return (
     <div className='no-print'>
@@ -19,7 +21,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson }) => {
             onClick={() => setIsSearchOpen(true)}
             aria-label='Axtar'
             title='Axtar'
-            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF]'
+            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiSearch aria-hidden='true' />
           </button>
@@ -28,14 +30,23 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson }) => {
             onClick={() => window.print()}
             aria-label='Çap et'
             title='Çap et'
-            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF]'
+            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiPrinter aria-hidden='true' />
           </button>
           <button
             type='button'
+            onClick={() => setIsSettingsOpen(true)}
+            aria-label='Tənzimləmələr'
+            title='Tənzimləmələr'
+            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+          >
+            <FiSettings aria-hidden='true' />
+          </button>
+          <button
+            type='button'
             onClick={() => setIsModalOpen(true)}
-            className='font-[Inter] rounded-[5px] bg-[#434140] px-[10px] py-[5px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
+            className='font-[Inter] rounded-[5px] bg-[#434140] px-[10px] py-[5px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
           >
             + Yeni Fənn
           </button>
@@ -47,6 +58,15 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson }) => {
           subjects={subjects}
           onSelectLesson={onSelectLesson}
           onClose={() => setIsSearchOpen(false)}
+        />
+      )}
+
+      {isSettingsOpen && (
+        <SettingsModal
+          open={isSettingsOpen}
+          theme={theme}
+          onSelectTheme={onSelectTheme}
+          onClose={() => setIsSettingsOpen(false)}
         />
       )}
 
