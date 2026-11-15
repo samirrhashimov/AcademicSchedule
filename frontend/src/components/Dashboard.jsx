@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiBookOpen, FiCalendar, FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiCopy, FiEdit2, FiMapPin, FiTrash2, FiUser, FiX } from 'react-icons/fi'
+import { FiBookOpen, FiCalendar, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiClock, FiCopy, FiEdit2, FiMapPin, FiTrash2, FiUser, FiX } from 'react-icons/fi'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 import DayInfoModal from './DayInfoModal'
@@ -8,9 +8,7 @@ import { getSequenceIndex, resolveLessonType } from '../lib/subjects'
 import {
   addWeeks,
   baseModeForWeek,
-  defaultWeekState,
   getWeekNumber,
-  normalizeWeekState,
   parseDayKey,
   reanchorWeekState,
   resolveWeekType,
@@ -31,19 +29,6 @@ const days = [
 const typeLabels = {
     lecture: 'Mühazirə',
     seminar: 'Seminar',
-}
-
-const WEEK_STORAGE_KEY = 'academic-schedule-week-mode'
-
-const loadWeekState = (fallbackMonday) => {
-    const fallbackMode = getWeekNumber(fallbackMonday) % 2 === 0 ? 'upper-week' : 'lower-week'
-    try {
-        const saved = localStorage.getItem(WEEK_STORAGE_KEY)
-        return normalizeWeekState(saved ? JSON.parse(saved) : null, fallbackMonday, fallbackMode)
-    } catch (error) {
-        console.error('Həftə rejimi localStorage-dan oxunmadı:', error)
-        return defaultWeekState(fallbackMonday, fallbackMode)
-    }
 }
 
 const getMonday = (date) => {
@@ -151,19 +136,23 @@ const PrintSchedules = ({ subjects, weekState }) => {
     const anchorMonday = parseDayKey(weekState.anchorWeekStart) || currentMonday
     const anchorMode = ['upper-week', 'lower-week'].includes(weekState.anchorMode) ? weekState.anchorMode : 'upper-week'
 
-    const weeks = ['upper-week', 'lower-week'].map((mode) => (
-        baseModeForWeek(anchorMonday, anchorMode, currentMonday) === mode
-            ? { mode, monday: currentMonday }
-            : { mode, monday: addWeeks(currentMonday, 1) }
-    ))
+    const weeks = weekState.system === 'single'
+        ? [{ mode: null, monday: currentMonday }]
+        : ['upper-week', 'lower-week'].map((mode) => (
+            baseModeForWeek(anchorMonday, anchorMode, currentMonday) === mode
+                ? { mode, monday: currentMonday }
+                : { mode, monday: addWeeks(currentMonday, 1) }
+        ))
 
     return (
         <div className='hidden print:block'>
             {weeks.map(({ mode, monday }) => {
                 const weekNumber = getWeekNumber(monday)
-                const active = subjects.filter((subject) => (
-                    subject.frequency === 'every-week' || subject.frequency === mode
-                ))
+                const active = !mode
+                    ? subjects.map((subject) => ({ ...subject, frequency: 'every-week' }))
+                    : subjects.filter((subject) => (
+                        subject.frequency === 'every-week' || subject.frequency === mode
+                    ))
                 const byDay = days.map((name, index) => {
                     const date = new Date(monday)
                     date.setDate(monday.getDate() + index)
@@ -171,10 +160,12 @@ const PrintSchedules = ({ subjects, weekState }) => {
                 })
                 const contentHours = getContentHours(byDay.flatMap(({ lessons }) => lessons.map(({ lesson }) => lesson)))
                 return (
-                    <section key={mode} className='mb-[16px]'>
-                        <h2 className='mb-[8px] ml-[6mm] text-[16px] font-bold text-[#434140]'>
-                            {mode === 'upper-week' ? 'Üst həftə' : 'Alt həftə'}
-                        </h2>
+                    <section key={mode || 'single'} className='mb-[16px]'>
+                        {mode && (
+                            <h2 className='mb-[8px] ml-[6mm] text-[16px] font-bold text-[#434140]'>
+                                {mode === 'upper-week' ? 'Üst həftə' : 'Alt həftə'}
+                            </h2>
+                        )}
                         {contentHours.length === 0 ? (
                             <p className='ml-[6mm] text-[13px] text-[#777]'>Bu həftə dərs yoxdur.</p>
                         ) : (
@@ -371,43 +362,60 @@ const SubjectMenu = ({ subjects, onRequestRemoveSubject, onEditSubject, onDuplic
     </aside>
 )
 
-const CalendarEvent = ({ subject, lesson, sequenceIndex, onRequestTypeChange, onEditSubject }) => {
+const CalendarEvent = ({ subject, lesson, sequenceIndex, onRequestTypeChange, onEditSubject, heightPx = 82 }) => {
     const type = resolveLessonType(subject, sequenceIndex)
     const overridden = isOverridden(subject, sequenceIndex)
+    const isLecture = type === 'lecture'
+    const typeColor = isLecture ? 'text-[#A65B46]' : 'text-[#477A68]'
+
+    // Hündürlüyə görə qat qat:
+    // 1) saat (həmişə)  2) ad (həmişə)  3) tip ayrıca sətirdə (həmişə)
+    const tier = heightPx < 88 ? 0 : heightPx < 140 ? 1 : 2
+    const showFullFooter = tier >= 2
 
     return (
     <div
-        onClick={() => onEditSubject(subject)}
-        title='Redaktə etmək üçün kliklə'
-        className={`print-exact h-full cursor-pointer overflow-hidden rounded-[5px] border-l-[4px] p-[7px] text-[13px] text-[#333] transition-[filter] hover:brightness-95 ${
-        type === 'lecture'
+        onClick={(event) => event.stopPropagation()}
+        onContextMenu={(event) => {
+            event.preventDefault()
+            onEditSubject(subject)
+        }}
+        title='Redaktə etmək üçün sağ kliklə'
+        className={`print-exact flex h-full cursor-context-menu flex-col overflow-hidden rounded-[8px] border-l-[4px] text-[13px] text-[#333] transition-[filter] hover:brightness-95 ${tier === 0 ? 'p-[6px]' : 'p-[8px]'} ${
+        isLecture
             ? 'border-[#A65B46] bg-[#FCE5E0]'
             : 'border-[#477A68] bg-[#E3F1EC]'
     }`}>
-        <p className='font-bold'>{getStartTime(lesson)} - {lesson.endTime || 'növbəti saat'}</p>
-        <p className='truncate font-medium'>{subject.name}</p>
-        {(subject.teacher || subject.room) && (
-            <p className='truncate text-[12px] text-[#666]'>
-                {[subject.teacher, subject.room].filter(Boolean).join(' • ')}
-            </p>
-        )}
-        <select
-            value={type}
-            onClick={(event) => event.stopPropagation()}
-            onChange={(event) => {
-                if (event.target.value !== type) {
-                    onRequestTypeChange(subject, lesson, sequenceIndex, event.target.value)
-                }
-            }}
-            aria-label={`${subject.name} üçün dərs tipi`}
-            className='mt-[3px] max-w-full bg-transparent text-[12px] font-medium text-[#333] outline-none'
-        >
-            <option value='lecture'>{typeLabels.lecture}</option>
-            <option value='seminar'>{typeLabels.seminar}</option>
-        </select>
-        {overridden && (
-            <p className='mt-[2px] text-[11px] text-[#777]' title='Ardıcıllıq qaydasından istisna'>istisna ✎</p>
-        )}
+        <p className='flex items-center gap-[4px] text-[12px] font-bold tabular-nums'>
+            <FiClock aria-hidden='true' className='shrink-0' />
+            {getStartTime(lesson)} - {lesson.endTime || 'növbəti saat'}
+        </p>
+        <p className={`truncate font-bold leading-snug ${tier === 0 ? 'mt-[1px] text-[13px]' : 'mt-[2px] text-[14px]'}`}>{subject.name}</p>
+        {/* Tip ayrıca sətirdə: dar kartda addan sonra, genişdə aşağıda. */}
+        <div className='mt-auto flex items-center justify-between gap-[4px] pt-[4px]'>
+            <span className='relative inline-flex max-w-full shrink-0 items-center'>
+                <select
+                    value={type}
+                    onClick={(event) => event.stopPropagation()}
+                    onContextMenu={(event) => event.stopPropagation()}
+                    onChange={(event) => {
+                        if (event.target.value !== type) {
+                            onRequestTypeChange(subject, lesson, sequenceIndex, event.target.value)
+                        }
+                    }}
+                    title={overridden ? 'Ardıcıllıq qaydasından istisna' : `${subject.name} üçün dərs tipi`}
+                    aria-label={`${subject.name} üçün dərs tipi`}
+                    className={`max-w-full appearance-none rounded-full bg-[#FFF]/70 font-bold outline-none ${tier === 0 ? 'py-[2px] pl-[8px] pr-[20px] text-[11px]' : 'py-[3px] pl-[8px] pr-[22px] text-[12px]'} ${typeColor} ${overridden && !showFullFooter ? 'ring-1 ring-[#A65B46]/50' : ''}`}
+                >
+                    <option value='lecture'>{typeLabels.lecture}</option>
+                    <option value='seminar'>{typeLabels.seminar}</option>
+                </select>
+                <FiChevronDown aria-hidden='true' className={`pointer-events-none absolute right-[7px] text-[12px] ${typeColor}`} />
+            </span>
+            {overridden && showFullFooter && (
+                <span className='shrink-0 text-[11px] italic text-[#777]' title='Ardıcıllıq qaydasından istisna'>istisna</span>
+            )}
+        </div>
     </div>
     )
 }
@@ -579,13 +587,12 @@ const DeleteConfirmDialog = ({ subject, onConfirm, onCancel }) => {
     )
 }
 
-const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, onApplyLessonType, jump }) => {
+const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, onApplyLessonType, jump, weekState, onWeekStateChange }) => {
     const today = new Date()
     const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate())
     const currentWeekStart = getMonday(today)
     const currentWeekNumber = getWeekNumber(currentWeekStart)
     const [viewedWeekStart, setViewedWeekStart] = useState(() => currentWeekStart)
-    const [weekState, setWeekState] = useState(() => loadWeekState(currentWeekStart))
     const [editingSubject, setEditingSubject] = useState(null)
     const [pendingChange, setPendingChange] = useState(null)
     const [pendingWeekChange, setPendingWeekChange] = useState(null)
@@ -599,9 +606,8 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
     const highlightTimeout = useRef(null)
     const lastJumpRef = useRef(0)
 
-    // Google Calendar kimi: cədvəldə sağ kliklənən yerə yeni fənn.
-    const handleGridContextMenu = (event, dayName) => {
-        event.preventDefault()
+    // Cədvəldə boş yerə sol klik: kliklənən yerə yeni fənn.
+    const handleGridClick = (event, dayName) => {
         const rect = event.currentTarget.getBoundingClientRect()
         const totalMinutes = hours.length * 60
         const clicked = hours[0] * 60 + ((event.clientY - rect.top) / rect.height) * totalMinutes
@@ -640,10 +646,6 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
         })
     }
 
-    useEffect(() => {
-        localStorage.setItem(WEEK_STORAGE_KEY, JSON.stringify(weekState))
-    }, [weekState])
-
     const viewedWeekNumber = getWeekNumber(viewedWeekStart)
     const viewedWeekType = resolveWeekType(weekState, viewedWeekStart)
     const viewedMode = viewedWeekType.mode
@@ -669,7 +671,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
     const chooseWeekModeChange = (scope) => {
         if (pendingWeekChange) {
             const { newMode } = pendingWeekChange
-            setWeekState((current) => (
+            onWeekStateChange((current) => (
                 scope === 'always'
                     ? reanchorWeekState(current, viewedWeekStart, newMode)
                     : withWeekOverride(current, viewedWeekStart, newMode)
@@ -679,7 +681,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
     }
 
     const clearWeekOverride = () => {
-        setWeekState((current) => withWeekOverride(current, viewedWeekStart, null))
+        onWeekStateChange((current) => withWeekOverride(current, viewedWeekStart, null))
     }
 
     const weekDays = (
@@ -690,11 +692,17 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
         })
     )
 
-    const activeSubjects = subjects.filter((subject) => (
+    // Tək həftə rejimində tezlik fərqi yoxdur: hamı hər həftə görünür.
+    const weekSystem = weekState.system === 'single' ? 'single' : 'double'
+    const displaySubjects = weekSystem === 'single'
+        ? subjects.map((subject) => ({ ...subject, frequency: 'every-week' }))
+        : subjects
+
+    const activeSubjects = displaySubjects.filter((subject) => (
         subject.frequency === 'every-week'
         || subject.frequency === viewedMode
     ))
-    const currentActiveSubjects = subjects.filter((subject) => (
+    const currentActiveSubjects = displaySubjects.filter((subject) => (
         subject.frequency === 'every-week'
         || subject.frequency === currentMode
     ))
@@ -725,7 +733,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
     const tomorrowMonday = getMonday(tomorrowDate)
     const tomorrowWeekNumber = getWeekNumber(tomorrowMonday)
     const tomorrowMode = resolveWeekType(weekState, tomorrowMonday).mode
-    const tomorrowActiveSubjects = subjects.filter((subject) => (
+    const tomorrowActiveSubjects = displaySubjects.filter((subject) => (
         subject.frequency === 'every-week'
         || subject.frequency === tomorrowMode
     ))
@@ -868,22 +876,26 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                     <FiChevronRight aria-hidden='true' />
                                 </button>
                             </div>
-                            <div className='flex items-center gap-[6px]'>
-                                <div className='flex overflow-hidden rounded-[5px] border border-[#A65B46] text-[12px]'>
-                                    <button type='button' onClick={() => requestWeekModeChange('upper-week')} className={`px-[10px] py-[5px] ${viewedMode === 'upper-week' ? 'bg-[#A65B46] font-bold text-[#FFF] hover:bg-[#96543F]' : 'bg-[#FFF] text-[#A65B46] hover:bg-[#F7F3EC] dark:bg-[#2A2724] dark:hover:bg-[#3E3833]'}`}>Üst həftə</button>
-                                    <button type='button' onClick={() => requestWeekModeChange('lower-week')} className={`px-[10px] py-[5px] ${viewedMode === 'lower-week' ? 'bg-[#A65B46] font-bold text-[#FFF] hover:bg-[#96543F]' : 'bg-[#FFF] text-[#A65B46] hover:bg-[#F7F3EC] dark:bg-[#2A2724] dark:hover:bg-[#3E3833]'}`}>Alt həftə</button>
+                            {weekSystem === 'single' ? (
+                                <span className='rounded-[5px] bg-[#434140] px-[10px] py-[5px] text-[12px] font-bold text-[#FFF] dark:bg-[#E7D8C6] dark:text-[#434140]'>Tək həftə</span>
+                            ) : (
+                                <div className='flex items-center gap-[6px]'>
+                                    <div className='flex overflow-hidden rounded-[5px] border border-[#A65B46] text-[12px]'>
+                                        <button type='button' onClick={() => requestWeekModeChange('upper-week')} className={`px-[10px] py-[5px] ${viewedMode === 'upper-week' ? 'bg-[#A65B46] font-bold text-[#FFF] hover:bg-[#96543F]' : 'bg-[#FFF] text-[#A65B46] hover:bg-[#F7F3EC] dark:bg-[#2A2724] dark:hover:bg-[#3E3833]'}`}>Üst həftə</button>
+                                        <button type='button' onClick={() => requestWeekModeChange('lower-week')} className={`px-[10px] py-[5px] ${viewedMode === 'lower-week' ? 'bg-[#A65B46] font-bold text-[#FFF] hover:bg-[#96543F]' : 'bg-[#FFF] text-[#A65B46] hover:bg-[#F7F3EC] dark:bg-[#2A2724] dark:hover:bg-[#3E3833]'}`}>Alt həftə</button>
+                                    </div>
+                                    {viewedWeekType.isOverride && (
+                                        <button
+                                            type='button'
+                                            onClick={clearWeekOverride}
+                                            title='Avtomatik növbələşməyə qayıt'
+                                            className='rounded-[5px] border border-[#AAA] px-[8px] py-[4px] text-[12px] text-[#434140] hover:bg-[#EEE] dark:border-[#55504A] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+                                        >
+                                            Avto
+                                        </button>
+                                    )}
                                 </div>
-                                {viewedWeekType.isOverride && (
-                                    <button
-                                        type='button'
-                                        onClick={clearWeekOverride}
-                                        title='Avtomatik növbələşməyə qayıt'
-                                        className='rounded-[5px] border border-[#AAA] px-[8px] py-[4px] text-[12px] text-[#434140] hover:bg-[#EEE] dark:border-[#55504A] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
-                                    >
-                                        Avto
-                                    </button>
-                                )}
-                            </div>
+                            )}
                         </div>
                     </div>
 
@@ -913,6 +925,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                     sequenceIndex={sequenceIndex}
                                     onRequestTypeChange={requestTypeChange}
                                     onEditSubject={setEditingSubject}
+                                    heightPx={160}
                                 />
                             ))
                         )}
@@ -961,10 +974,10 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                             key={name}
                                             className={`relative border-l border-[#DDD] dark:border-[#3A3632] ${isTodayColumn ? 'bg-[#FCE5E0]/50 dark:bg-[#FCE5E0]/10' : ''}`}
                                             style={{ height: `${hours.length * HOUR_PX}px` }}
-                                            onContextMenu={(event) => handleGridContextMenu(event, name)}
+                                            onClick={(event) => handleGridClick(event, name)}
                                             onMouseMove={(event) => handleGridHover(event, name)}
                                             onMouseLeave={() => setHoverSlot(null)}
-                                            title='Sağ klik: yeni fənn'
+                                            title='Yeni fənn üçün kliklə'
                                         >
                                             {hours.map((hour) => (
                                                 <div
@@ -984,7 +997,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                                     className='absolute'
                                                     style={{
                                                         top: `${((start - hours[0] * 60) / 60) * HOUR_PX}px`,
-                                                        height: `${Math.max(((end - start) / 60) * HOUR_PX, 60)}px`,
+                                                        height: `${Math.max(((end - start) / 60) * HOUR_PX, 72)}px`,
                                                         left: `calc(${(lane / laneCount) * 100}% + 3px)`,
                                                         width: `calc(${100 / laneCount}% - 6px)`,
                                                     }}
@@ -998,6 +1011,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                                         sequenceIndex={sequenceIndex}
                                                         onRequestTypeChange={requestTypeChange}
                                                         onEditSubject={setEditingSubject}
+                                                        heightPx={Math.max(((end - start) / 60) * HOUR_PX, 72)}
                                                     />
                                                 </div>
                                                 )
@@ -1071,6 +1085,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
             {editingSubject && (
                 <NewSubjectModal
                     initialSubject={editingSubject}
+                    weekSystem={weekSystem}
                     onClose={() => setEditingSubject(null)}
                     onSubmit={(updated) => {
                         onUpdateSubject(updated)
@@ -1083,6 +1098,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                 <NewSubjectModal
                     initialSubject={copyingSubject}
                     copyMode
+                    weekSystem={weekSystem}
                     onClose={() => setCopyingSubject(null)}
                     onSubmit={(copied) => {
                         onAddSubject(copied)
@@ -1094,6 +1110,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
             {pendingSlot && (
                 <NewSubjectModal
                     preset={[pendingSlot]}
+                    weekSystem={weekSystem}
                     onClose={() => setPendingSlot(null)}
                     onSubmit={(created) => {
                         onAddSubject(created)

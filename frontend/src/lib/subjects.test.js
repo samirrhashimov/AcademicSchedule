@@ -102,4 +102,20 @@ describe('nisbət mühərriki (2 mühazirə + 1 seminar)', () => {
     const types = [3, 4, 5, 6, 7, 8].map((seq) => resolveLessonType(shifted, seq))
     assert.deepEqual(types, ['seminar', 'lecture', 'lecture', 'seminar', 'lecture', 'lecture'])
   })
+
+  it('həmişəlik ikinci dəfə də işləyir (offset sıfır olmayanda)', () => {
+    const once = withShiftedOffset(makeSubject(), 3, 'seminar')
+    const twice = withShiftedOffset(once, 4, 'seminar')
+    assert.equal(resolveLessonType(twice, 4), 'seminar')
+    const types = [3, 4, 5, 6, 7, 8].map((seq) => resolveLessonType(twice, seq))
+    assert.deepEqual(types, ['lecture', 'seminar', 'lecture', 'lecture', 'seminar', 'lecture'])
+  })
+
+  it('həmişəlik həmin halın birdəfəlik istisnasını təmizləyir', () => {
+    const withOverride = withOnceOverride(makeSubject(), 3, 'seminar')
+    assert.equal(resolveLessonType(withOverride, 3), 'seminar')
+    const shifted = withShiftedOffset(withOverride, 3, 'lecture')
+    assert.ok(!('3' in shifted.overrides))
+    assert.equal(resolveLessonType(shifted, 3), 'lecture')
+  })
 })

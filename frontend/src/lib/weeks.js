@@ -1,4 +1,6 @@
 export const VALID_WEEK_MODES = ['upper-week', 'lower-week']
+export const VALID_WEEK_SYSTEMS = ['single', 'double']
+export const WEEK_STORAGE_KEY = 'academic-schedule-week-mode'
 
 export const otherMode = (mode) => (mode === 'upper-week' ? 'lower-week' : 'upper-week')
 
@@ -62,7 +64,23 @@ export const defaultWeekState = (anchorMonday, anchorMode) => ({
   anchorWeekStart: toDayKey(anchorMonday),
   anchorMode: VALID_WEEK_MODES.includes(anchorMode) ? anchorMode : 'upper-week',
   overrides: {},
+  system: 'double',
 })
+
+export const loadWeekState = (fallbackMonday) => {
+  const fallbackMode = getWeekNumber(fallbackMonday) % 2 === 0 ? 'upper-week' : 'lower-week'
+  try {
+    const saved = localStorage.getItem(WEEK_STORAGE_KEY)
+    return normalizeWeekState(saved ? JSON.parse(saved) : null, fallbackMonday, fallbackMode)
+  } catch (error) {
+    console.error('Həftə rejimi localStorage-dan oxunmadı:', error)
+    return defaultWeekState(fallbackMonday, fallbackMode)
+  }
+}
+
+export const saveWeekState = (weekState) => {
+  localStorage.setItem(WEEK_STORAGE_KEY, JSON.stringify(weekState))
+}
 
 // Köhnə {weekStart, mode} formatından miqrasiya; yararsız məlumatda baza dəyər.
 export const normalizeWeekState = (raw, fallbackMonday, fallbackMode) => {
@@ -83,11 +101,17 @@ export const normalizeWeekState = (raw, fallbackMonday, fallbackMode) => {
       anchorWeekStart: raw.anchorWeekStart,
       anchorMode: VALID_WEEK_MODES.includes(raw.anchorMode) ? raw.anchorMode : fallback.anchorMode,
       overrides,
+      system: VALID_WEEK_SYSTEMS.includes(raw.system) ? raw.system : 'double',
     }
   }
   if (typeof raw.weekStart === 'string' && parseDayKey(raw.weekStart)
     && VALID_WEEK_MODES.includes(raw.mode)) {
-    return { anchorWeekStart: toDayKey(parseDayKey(raw.weekStart)), anchorMode: raw.mode, overrides: {} }
+    return {
+      anchorWeekStart: toDayKey(parseDayKey(raw.weekStart)),
+      anchorMode: raw.mode,
+      overrides: {},
+      system: VALID_WEEK_SYSTEMS.includes(raw.system) ? raw.system : 'double',
+    }
   }
   if (VALID_WEEK_MODES.includes(raw.mode)) {
     return { ...fallback, anchorMode: raw.mode }

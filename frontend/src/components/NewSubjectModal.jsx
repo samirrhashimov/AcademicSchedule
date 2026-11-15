@@ -38,9 +38,10 @@ const buildDayDetails = (schedule = []) => {
   return details
 }
 
-const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = false, preset = null }) => {
+const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = false, preset = null, weekSystem = 'double' }) => {
   const isCopyMode = Boolean(copyMode)
   const isEditMode = Boolean(initialSubject) && !isCopyMode
+  const showFrequency = weekSystem !== 'single'
   const [selectedDays, setSelectedDays] = useState(() => {
     if (initialSubject) {
       return initialSubject.schedule.map((lesson) => lesson.day)
@@ -154,7 +155,7 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = 
       name: subjectName.trim(),
       lectureCount: Number(lectureCount),
       seminarCount: Number(seminarCount),
-      frequency,
+      frequency: showFrequency ? frequency : (initialSubject?.frequency || 'every-week'),
       schedule,
       teacher: teacher.trim(),
       room: room.trim(),
@@ -280,6 +281,7 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = 
           </div>
         </fieldset>
 
+        {showFrequency && (
         <fieldset className='mb-[20px]'>
           <legend className='mb-[10px] text-[14px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Həftə tezliyi</legend>
           <div className='flex flex-col gap-[8px]'>
@@ -305,6 +307,7 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = 
             ))}
           </div>
         </fieldset>
+        )}
 
         {error && <p className='mb-[16px] rounded-[8px] bg-[#FCE5E0] p-[10px] text-[14px] text-[#A65B46]'>{error}</p>}
 

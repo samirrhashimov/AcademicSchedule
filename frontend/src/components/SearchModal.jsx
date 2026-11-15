@@ -16,15 +16,19 @@ const frequencyLabels = {
   'lower-week': 'Alt həftə',
 }
 
-const SearchModal = ({ subjects, onClose, onSelectLesson }) => {
+const SearchModal = ({ subjects, onClose, onSelectLesson, weekSystem = 'double' }) => {
   const [query, setQuery] = useState('')
   useLockBodyScroll()
   useEscapeKey(onClose)
   const weekNumber = getWeekNumber(mondayOfWeek(new Date()))
+  const showFrequency = weekSystem !== 'single'
+  const searchable = showFrequency
+    ? subjects
+    : subjects.map((subject) => ({ ...subject, frequency: 'every-week' }))
 
   const normalizedQuery = query.trim().toLowerCase()
   const results = normalizedQuery
-    ? subjects.filter((subject) => (
+    ? searchable.filter((subject) => (
       subject.name.toLowerCase().includes(normalizedQuery)
       || (subject.teacher || '').toLowerCase().includes(normalizedQuery)
       || (subject.room || '').toLowerCase().includes(normalizedQuery)
@@ -74,7 +78,7 @@ const SearchModal = ({ subjects, onClose, onSelectLesson }) => {
                 <div key={subject.id} className='rounded-[8px] border border-[#EEE] bg-[#FFF] p-[12px] dark:border-[#4A4440] dark:bg-[#35302C]'>
                   <p className='truncate text-[14px] font-bold text-[#434140] dark:text-[#EDE8DF]'>{subject.name}</p>
                   <p className='mt-[2px] text-[12px] text-[#777] dark:text-[#A8A29E]'>
-                    {[subject.teacher && `Müəllim: ${subject.teacher}`, subject.room && `Otaq: ${subject.room}`, frequencyLabels[subject.frequency]].filter(Boolean).join(' • ')}
+                    {[subject.teacher && `Müəllim: ${subject.teacher}`, subject.room && `Otaq: ${subject.room}`, showFrequency && frequencyLabels[subject.frequency]].filter(Boolean).join(' • ')}
                   </p>
                   <ul className='mt-[8px] flex flex-col gap-[6px]'>
                     {subject.schedule.map((lesson, lessonIndex) => {

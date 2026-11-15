@@ -4,7 +4,7 @@ import NewSubjectModal from './NewSubjectModal'
 import SearchModal from './SearchModal'
 import SettingsModal from './SettingsModal'
 
-const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme }) => {
+const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, weekSystem, onWeekSystemChange }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -56,6 +56,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme }
       {isSearchOpen && (
         <SearchModal
           subjects={subjects}
+          weekSystem={weekSystem}
           onSelectLesson={onSelectLesson}
           onClose={() => setIsSearchOpen(false)}
         />
@@ -66,12 +67,15 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme }
           open={isSettingsOpen}
           theme={theme}
           onSelectTheme={onSelectTheme}
+          weekSystem={weekSystem}
+          onWeekSystemChange={onWeekSystemChange}
           onClose={() => setIsSettingsOpen(false)}
         />
       )}
 
       {isModalOpen && (
         <NewSubjectModal
+          weekSystem={weekSystem}
           onClose={() => setIsModalOpen(false)}
           onSubmit={(subject) => {
             onAddSubject(subject)

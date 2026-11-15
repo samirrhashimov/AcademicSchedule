@@ -7,6 +7,7 @@ import {
   withOnceOverride,
   withShiftedOffset,
 } from './lib/subjects'
+import { loadWeekState, mondayOfWeek, saveWeekState } from './lib/weeks'
 
 const STORAGE_KEY = 'academic-schedule-subjects'
 
@@ -54,10 +55,19 @@ function App() {
   const [subjects, setSubjects] = useState(loadSubjects)
   const [jump, setJump] = useState(null)
   const [theme, setTheme] = useState(getInitialTheme)
+  const [weekState, setWeekState] = useState(() => loadWeekState(mondayOfWeek(new Date())))
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects))
   }, [subjects])
+
+  useEffect(() => {
+    try {
+      saveWeekState(weekState)
+    } catch {
+      // yaddaş əlçatan deyilsə sessiya ilə qalır
+    }
+  }, [weekState])
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
@@ -133,6 +143,8 @@ function App() {
         onSelectLesson={(selection) => setJump({ ...selection, n: Date.now() })}
         theme={theme}
         onSelectTheme={setTheme}
+        weekSystem={weekState.system}
+        onWeekSystemChange={(system) => setWeekState((current) => ({ ...current, system }))}
       />
       <Dashboard
         subjects={subjects}
@@ -141,6 +153,8 @@ function App() {
         onUpdateSubject={updateSubject}
         onApplyLessonType={applyLessonType}
         jump={jump}
+        weekState={weekState}
+        onWeekStateChange={setWeekState}
       />
     </div>
   )

@@ -48,6 +48,7 @@ export const withOnceOverride = (subject, sequenceIndex, type) => {
 
 // Həmişəlik: ardıcıllıq elə sürüşür ki, həmin hal seçilən tip olsun,
 // qalanlar da eyni nisbətlə davam etsin (seminarlar arda-arda düşməsin).
+// Köhnə offset və həmin halın birdəfəlik istisnası təmizlənir.
 export const withShiftedOffset = (subject, sequenceIndex, type) => {
   const lectureCount = Number(subject.lectureCount) || 0
   const seminarCount = Number(subject.seminarCount) || 0
@@ -57,9 +58,10 @@ export const withShiftedOffset = (subject, sequenceIndex, type) => {
   }
 
   const typeIndex = type === 'lecture' ? 0 : lectureCount
-  const currentOffset = Number(subject.sequenceOffset) || 0
-  const offset = (typeIndex - (sequenceIndex + currentOffset)) % cycleLength
-  return { ...subject, sequenceOffset: (offset + cycleLength) % cycleLength }
+  const shifted = (typeIndex - sequenceIndex) % cycleLength
+  const overrides = { ...(subject.overrides || {}) }
+  delete overrides[String(sequenceIndex)]
+  return { ...subject, sequenceOffset: (shifted + cycleLength) % cycleLength, overrides }
 }
 
 export const normalizeSubject = (raw) => {

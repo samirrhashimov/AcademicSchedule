@@ -80,7 +80,15 @@ describe('normalizeWeekState', () => {
       anchorWeekStart: '2026-11-09',
       anchorMode: 'lower-week',
       overrides: { '2026-11-16': 'lower-week' },
+      system: 'double',
     })
+  })
+
+  it('həftə sistemi saxlanılır, yararsız dəyər double olur', () => {
+    const base = { anchorWeekStart: '2026-11-09', anchorMode: 'lower-week', overrides: {} }
+    assert.equal(normalizeWeekState({ ...base, system: 'single' }, fallback, 'upper-week').system, 'single')
+    assert.equal(normalizeWeekState(base, fallback, 'upper-week').system, 'double')
+    assert.equal(normalizeWeekState({ ...base, system: 'pis' }, fallback, 'upper-week').system, 'double')
   })
 
   it('köhnə {weekStart, mode} formatından miqrasiya edir', () => {
