@@ -10,13 +10,34 @@ const days = [
   'Bazar',
 ]
 
-const NewSubjectModal = ({ onClose, onSubmit }) => {
-  const [selectedDays, setSelectedDays] = useState([])
-  const [dayDetails, setDayDetails] = useState({})
-  const [subjectName, setSubjectName] = useState('')
-  const [lectureCount, setLectureCount] = useState(2)
-  const [seminarCount, setSeminarCount] = useState(1)
-  const [frequency, setFrequency] = useState('every-week')
+const COLOR_PRESETS = ['#A65B46', '#477A68', '#434140', '#B98A2F', '#5B6BAE', '#8A4FA3']
+
+const buildDayDetails = (schedule = []) => {
+  const details = {}
+  for (const lesson of schedule) {
+    if (lesson?.day) {
+      details[lesson.day] = {
+        startTime: lesson.startTime || lesson.time || '',
+        endTime: lesson.endTime || '',
+      }
+    }
+  }
+  return details
+}
+
+const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null }) => {
+  const isEditMode = Boolean(initialSubject)
+  const [selectedDays, setSelectedDays] = useState(() => (
+    initialSubject ? initialSubject.schedule.map((lesson) => lesson.day) : []
+  ))
+  const [dayDetails, setDayDetails] = useState(() => buildDayDetails(initialSubject?.schedule))
+  const [subjectName, setSubjectName] = useState(initialSubject?.name || '')
+  const [lectureCount, setLectureCount] = useState(initialSubject?.lectureCount ?? 2)
+  const [seminarCount, setSeminarCount] = useState(initialSubject?.seminarCount ?? 1)
+  const [frequency, setFrequency] = useState(initialSubject?.frequency || 'every-week')
+  const [teacher, setTeacher] = useState(initialSubject?.teacher || '')
+  const [room, setRoom] = useState(initialSubject?.room || '')
+  const [color, setColor] = useState(initialSubject?.color || COLOR_PRESETS[0])
   const [error, setError] = useState('')
 
   const toggleDay = (day) => {
@@ -51,9 +72,14 @@ const NewSubjectModal = ({ onClose, onSubmit }) => {
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    const totalLessons = lectureCount + seminarCount
+    const totalLessons = Number(lectureCount) + Number(seminarCount)
     if (totalLessons === 0) {
       setError('Mühazirə və ya seminar sayı ən azı 1 olmalıdır.')
+      return
+    }
+
+    if (!subjectName.trim()) {
+      setError('Fənnin adını yaz.')
       return
     }
 
@@ -75,23 +101,34 @@ const NewSubjectModal = ({ onClose, onSubmit }) => {
     const orderedDays = [...selectedDays].sort((firstDay, secondDay) => (
       days.indexOf(firstDay) - days.indexOf(secondDay)
     ))
-    const generatedTypes = [
-      ...Array(lectureCount).fill('lecture'),
-      ...Array(seminarCount).fill('seminar'),
-    ]
+    const schedule = orderedDays.map((day) => ({
+      day,
+      startTime: dayDetails[day].startTime,
+      endTime: dayDetails[day].endTime,
+    }))
+
+    // Say nisbəti və ya cədvəl düzülüşü dəyişibsə, köhnə birdəfəlik
+    // istisnalar yeni ardıcıllığa uyğun gəlmir — təmiz başlayırıq.
+    const layoutChanged = isEditMode && (
+      initialSubject.lectureCount !== Number(lectureCount)
+      || initialSubject.seminarCount !== Number(seminarCount)
+      || initialSubject.frequency !== frequency
+      || JSON.stringify(initialSubject.schedule.map(({ day, startTime, endTime }) => ({ day, startTime, endTime })))
+        !== JSON.stringify(schedule)
+    )
 
     onSubmit({
-      id: `${Date.now()}-${subjectName}`,
+      ...(initialSubject || {}),
+      id: initialSubject?.id || `${Date.now()}-${subjectName.trim()}`,
       name: subjectName.trim(),
-      lectureCount,
-      seminarCount,
+      lectureCount: Number(lectureCount),
+      seminarCount: Number(seminarCount),
       frequency,
-      schedule: orderedDays.map((day, index) => ({
-        day,
-        startTime: dayDetails[day].startTime,
-        endTime: dayDetails[day].endTime,
-        type: generatedTypes[index] || 'lecture',
-      })),
+      schedule,
+      teacher: teacher.trim(),
+      room: room.trim(),
+      color,
+      overrides: layoutChanged ? {} : (initialSubject?.overrides || {}),
     })
   }
 
@@ -107,7 +144,9 @@ const NewSubjectModal = ({ onClose, onSubmit }) => {
         className='max-h-[90vh] w-full max-w-[520px] overflow-y-auto rounded-[8px] bg-[#FFF] p-[25px] text-[#333] shadow-lg'
       >
         <div className='mb-[20px] flex items-center justify-between'>
-          <h2 id='new-subject-title' className='text-[22px] font-bold'>Yeni fənn</h2>
+          <h2 id='new-subject-title' className='text-[22px] font-bold'>
+            {isEditMode ? 'Fənni redaktə et' : 'Yeni fənn'}
+          </h2>
           <button
             type='button'
             onClick={onClose}
@@ -130,9 +169,52 @@ const NewSubjectModal = ({ onClose, onSubmit }) => {
           />
         </label>
 
+        <div className='mb-[15px] grid grid-cols-1 gap-[10px] sm:grid-cols-2'>
+          <label className='block'>
+            <span className='mb-[5px] block font-medium'>Müəllim:</span>
+            <input
+              type='text'
+              placeholder='Ad Soyad'
+              value={teacher}
+              onChange={(event) => setTeacher(event.target.value)}
+              className='w-full rounded-[5px] border border-[#AAA] p-[8px]'
+            />
+          </label>
+          <label className='block'>
+            <span className='mb-[5px] block font-medium'>Otaq:</span>
+            <input
+              type='text'
+              placeholder='m. 301'
+              value={room}
+              onChange={(event) => setRoom(event.target.value)}
+              className='w-full rounded-[5px] border border-[#AAA] p-[8px]'
+            />
+          </label>
+        </div>
+
+        <fieldset className='mb-[15px]'>
+          <legend className='mb-[8px] font-medium'>Rəng:</legend>
+          <div className='flex gap-[8px]'>
+            {COLOR_PRESETS.map((preset) => (
+              <button
+                key={preset}
+                type='button'
+                onClick={() => setColor(preset)}
+                aria-label={`Rəng ${preset}`}
+                aria-pressed={color === preset}
+                style={{ backgroundColor: preset }}
+                className={`h-[28px] w-[28px] rounded-full ${color === preset ? 'ring-2 ring-offset-2 ring-[#434140]' : ''}`}
+              />
+            ))}
+          </div>
+        </fieldset>
+
         <fieldset className='mb-[15px]'>
           <legend className='mb-[8px] font-medium'>Dərs nisbəti (ardıcıllıq üzrə):</legend>
-          <p className='mb-[8px] text-[12px] text-[#777]'>Bu saylar həftəlik gün sayı deyil. Dərslər keçirildikcə ardıcıllıqla tətbiq olunur.</p>
+          <p className='mb-[8px] text-[12px] text-[#777]'>
+            Dərslər keçirildikcə bu nisbətlə tətbiq olunur. Cədvəldəki bir dərsi dəyişəndə
+            soruşacam: birdəfəlik, yoxsa həmişə.
+          </p>
           <div className='flex gap-[15px]'>
             <label>
               <span className='mr-[5px]'>Mühazirə sayı:</span>
@@ -203,7 +285,7 @@ const NewSubjectModal = ({ onClose, onSubmit }) => {
           type='submit'
           className='w-full rounded-[5px] bg-[#434140] py-[9px] font-medium text-[#E7D8C6]'
         >
-          Fənni əlavə et
+          {isEditMode ? 'Yadda saxla' : 'Fənni əlavə et'}
         </button>
       </form>
     </div>
