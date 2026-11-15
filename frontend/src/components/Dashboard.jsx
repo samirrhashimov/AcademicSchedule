@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiCalendar, FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiCopy, FiEdit2, FiTrash2 } from 'react-icons/fi'
+import { FiCalendar, FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiCopy, FiEdit2, FiTrash2, FiX } from 'react-icons/fi'
+import { useEscapeKey } from '../lib/useEscapeKey'
+import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 import DayInfoModal from './DayInfoModal'
 import NewSubjectModal from './NewSubjectModal'
 import { getSequenceIndex, resolveLessonType } from '../lib/subjects'
@@ -12,6 +14,7 @@ import {
   parseDayKey,
   reanchorWeekState,
   resolveWeekType,
+  toDayKey,
   withWeekOverride,
 } from '../lib/weeks'
 
@@ -405,48 +408,50 @@ const CalendarEvent = ({ subject, lesson, sequenceIndex, onRequestTypeChange, on
 }
 
 const TypeChangeDialog = ({ pending, onChoose, onCancel }) => {
+    useLockBodyScroll(Boolean(pending))
+    useEscapeKey(onCancel, Boolean(pending))
     if (!pending) {
         return null
     }
 
     return (
         <div
-            className='fixed inset-0 z-20 flex items-center justify-center bg-black/50 p-[20px]'
+            className='modal-overlay-in fixed inset-0 z-20 flex items-center justify-center bg-black/50 p-[20px]'
             role='dialog'
             aria-modal='true'
             aria-labelledby='type-change-title'
         >
-            <div className='w-full max-w-[420px] rounded-[8px] bg-[#FFF] p-[20px] text-[#333] shadow-lg'>
-                <h2 id='type-change-title' className='mb-[8px] text-[18px] font-bold'>Dərs tipini dəyiş</h2>
-                <p className='mb-[4px] text-[14px]'>
+            <div className='modal-card-in w-full max-w-[420px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl'>
+                <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px]'>
+                    <h2 id='type-change-title' className='text-[20px] font-bold text-[#434140]'>Dərs tipini dəyiş</h2>
+                    <button
+                        type='button'
+                        onClick={onCancel}
+                        aria-label='Bağla'
+                        className='flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#F1EFE9] text-[18px] text-[#434140] hover:bg-[#E4E0D6]'
+                    >
+                        <FiX aria-hidden='true' />
+                    </button>
+                </div>
+                <p className='mb-[16px] text-[14px]'>
                     {pending.subject.name} - {pending.lesson.day},{' '}
                     {getStartTime(pending.lesson)}: {typeLabels[pending.currentType]} →{' '}
-                    <strong>{typeLabels[pending.newType]}</strong>
+                    <strong>{typeLabels[pending.newType]}</strong>. Bu dəyişiklik necə tətbiq olunsun?
                 </p>
-                <p className='mb-[15px] text-[13px] text-[#666]'>
-                    Bu dəyişiklik necə tətbiq olunsun?
-                </p>
-                <div className='flex flex-col gap-[8px]'>
+                <div className='flex flex-col gap-[10px]'>
                     <button
                         type='button'
                         onClick={() => onChoose('once')}
-                        className='rounded-[5px] border border-[#477A68] px-[10px] py-[8px] text-[14px] font-medium text-[#477A68] hover:bg-[#E3F1EC]'
+                        className='rounded-[8px] border border-[#477A68] px-[10px] py-[12px] text-[14px] font-medium text-[#477A68] hover:bg-[#E3F1EC]'
                     >
                         Bir dəfəlik - yalnız bu həftəki dərs
                     </button>
                     <button
                         type='button'
                         onClick={() => onChoose('always')}
-                        className='rounded-[5px] bg-[#434140] px-[10px] py-[8px] text-[14px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
+                        className='rounded-[8px] bg-[#434140] px-[10px] py-[12px] text-[14px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
                     >
                         Həmişə - bu gündən etibarən nisbətlə davam etsin
-                    </button>
-                    <button
-                        type='button'
-                        onClick={onCancel}
-                        className='rounded-[5px] px-[10px] py-[8px] text-[14px] text-[#777] hover:bg-[#EEE]'
-                    >
-                        Ləğv et
                     </button>
                 </div>
             </div>
@@ -455,47 +460,49 @@ const TypeChangeDialog = ({ pending, onChoose, onCancel }) => {
 }
 
 const WeekTypeChangeDialog = ({ pending, currentLabel, onChoose, onCancel }) => {
+    useLockBodyScroll(Boolean(pending))
+    useEscapeKey(onCancel, Boolean(pending))
     if (!pending) {
         return null
     }
 
     return (
         <div
-            className='fixed inset-0 z-20 flex items-center justify-center bg-black/50 p-[20px]'
+            className='modal-overlay-in fixed inset-0 z-20 flex items-center justify-center bg-black/50 p-[20px]'
             role='dialog'
             aria-modal='true'
             aria-labelledby='week-type-change-title'
         >
-            <div className='w-full max-w-[420px] rounded-[8px] bg-[#FFF] p-[20px] text-[#333] shadow-lg'>
-                <h2 id='week-type-change-title' className='mb-[8px] text-[18px] font-bold'>Həftənin tipini dəyiş</h2>
-                <p className='mb-[4px] text-[14px]'>
+            <div className='modal-card-in w-full max-w-[420px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl'>
+                <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px]'>
+                    <h2 id='week-type-change-title' className='text-[20px] font-bold text-[#434140]'>Həftənin tipini dəyiş</h2>
+                    <button
+                        type='button'
+                        onClick={onCancel}
+                        aria-label='Bağla'
+                        className='flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#F1EFE9] text-[18px] text-[#434140] hover:bg-[#E4E0D6]'
+                    >
+                        <FiX aria-hidden='true' />
+                    </button>
+                </div>
+                <p className='mb-[16px] text-[14px]'>
                     {currentLabel} →{' '}
-                    <strong>{pending.newMode === 'upper-week' ? 'Üst həftə' : 'Alt həftə'}</strong>
+                    <strong>{pending.newMode === 'upper-week' ? 'Üst həftə' : 'Alt həftə'}</strong>. Bu dəyişiklik necə tətbiq olunsun?
                 </p>
-                <p className='mb-[15px] text-[13px] text-[#666]'>
-                    Bu dəyişiklik necə tətbiq olunsun?
-                </p>
-                <div className='flex flex-col gap-[8px]'>
+                <div className='flex flex-col gap-[10px]'>
                     <button
                         type='button'
                         onClick={() => onChoose('once')}
-                        className='rounded-[5px] border border-[#477A68] px-[10px] py-[8px] text-[14px] font-medium text-[#477A68] hover:bg-[#E3F1EC]'
+                        className='rounded-[8px] border border-[#477A68] px-[10px] py-[12px] text-[14px] font-medium text-[#477A68] hover:bg-[#E3F1EC]'
                     >
                         İstisna - yalnız bu həftə
                     </button>
                     <button
                         type='button'
                         onClick={() => onChoose('always')}
-                        className='rounded-[5px] bg-[#434140] px-[10px] py-[8px] text-[14px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
+                        className='rounded-[8px] bg-[#434140] px-[10px] py-[12px] text-[14px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
                     >
                         Həmişə - bu həftədən etibarən o sıra ilə davam etsin
-                    </button>
-                    <button
-                        type='button'
-                        onClick={onCancel}
-                        className='rounded-[5px] px-[10px] py-[8px] text-[14px] text-[#777] hover:bg-[#EEE]'
-                    >
-                        Ləğv et
                     </button>
                 </div>
             </div>
@@ -504,34 +511,46 @@ const WeekTypeChangeDialog = ({ pending, currentLabel, onChoose, onCancel }) => 
 }
 
 const DeleteConfirmDialog = ({ subject, onConfirm, onCancel }) => {
+    useLockBodyScroll(Boolean(subject))
+    useEscapeKey(onCancel, Boolean(subject))
     if (!subject) {
         return null
     }
 
     return (
         <div
-            className='fixed inset-0 z-20 flex items-center justify-center bg-black/50 p-[20px]'
+            className='modal-overlay-in fixed inset-0 z-20 flex items-center justify-center bg-black/50 p-[20px]'
             role='dialog'
             aria-modal='true'
             aria-labelledby='delete-confirm-title'
         >
-            <div className='w-full max-w-[380px] rounded-[8px] bg-[#FFF] p-[20px] text-[#333] shadow-lg'>
-                <h2 id='delete-confirm-title' className='mb-[8px] text-[18px] font-bold'>Fənni sil</h2>
-                <p className='mb-[15px] text-[14px]'>
+            <div className='modal-card-in w-full max-w-[380px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl'>
+                <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px]'>
+                    <h2 id='delete-confirm-title' className='text-[20px] font-bold text-[#434140]'>Fənni sil</h2>
+                    <button
+                        type='button'
+                        onClick={onCancel}
+                        aria-label='Bağla'
+                        className='flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#F1EFE9] text-[18px] text-[#434140] hover:bg-[#E4E0D6]'
+                    >
+                        <FiX aria-hidden='true' />
+                    </button>
+                </div>
+                <p className='mb-[16px] text-[14px]'>
                     “<strong>{subject.name}</strong>” silinsin? Əminsən?
                 </p>
-                <div className='flex flex-col gap-[8px]'>
+                <div className='flex flex-col gap-[10px]'>
                     <button
                         type='button'
                         onClick={onConfirm}
-                        className='rounded-[5px] bg-[#A65B46] px-[10px] py-[8px] text-[14px] font-medium text-[#FFF] hover:bg-[#96543F]'
+                        className='rounded-[8px] bg-[#A65B46] px-[10px] py-[12px] text-[14px] font-medium text-[#FFF] hover:bg-[#96543F]'
                     >
                         Bəli, sil
                     </button>
                     <button
                         type='button'
                         onClick={onCancel}
-                        className='rounded-[5px] px-[10px] py-[8px] text-[14px] text-[#777] hover:bg-[#EEE]'
+                        className='rounded-[8px] px-[10px] py-[12px] text-[14px] text-[#777] hover:bg-[#EEE]'
                     >
                         Ləğv et
                     </button>
@@ -861,7 +880,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                             </button>
                         ))}
                     </div>
-                    <div className='no-print flex flex-col gap-[8px] lg:hidden'>
+                    <div key={mobileDay} className='week-fade no-print flex flex-col gap-[8px] lg:hidden'>
                         {mobileLessons.length === 0 ? (
                             <p className='rounded-[8px] bg-[#FFF] p-[12px] text-[13px] text-[#777] shadow-sm'>
                                 {mobileDay} günü dərs yoxdur.
@@ -885,7 +904,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                         <p className='text-[13px] text-[#434140]'>Həftəlik cədvəl</p>
                     </div>
                     <PrintSchedules subjects={subjects} weekState={weekState} />
-                    <div className='no-print hidden overflow-x-auto rounded-[8px] bg-[#FFF] shadow-sm lg:block'>
+                    <div key={toDayKey(viewedWeekStart)} className='week-fade no-print hidden overflow-x-auto rounded-[8px] bg-[#FFF] shadow-sm lg:block'>
                         <div className='min-w-[1050px]'>
                             <div className='grid grid-cols-[52px_repeat(7,minmax(130px,1fr))] border-b border-[#DDD]'>
                                 <div className='border-b border-[#DDD] p-[8px]' />

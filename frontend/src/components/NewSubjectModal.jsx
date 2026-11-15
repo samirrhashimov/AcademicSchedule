@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { FiX } from 'react-icons/fi'
+import { useEscapeKey } from '../lib/useEscapeKey'
+import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 
 const days = [
   'Bazar ertəsi',
@@ -47,6 +49,8 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = 
   const [teacher, setTeacher] = useState(initialSubject?.teacher || '')
   const [room, setRoom] = useState(initialSubject?.room || '')
   const [error, setError] = useState('')
+  useLockBodyScroll()
+  useEscapeKey(onClose)
 
   const toggleDay = (day) => {
     setSelectedDays((currentDays) => (
@@ -115,8 +119,6 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = 
       endTime: dayDetails[day].endTime,
     }))
 
-    // Say nisbəti və ya cədvəl düzülüşü dəyişibsə, köhnə birdəfəlik
-    // istisnalar yeni ardıcıllığa uyğun gəlmir — təmiz başlayırıq.
     const layoutChanged = isEditMode && (
       initialSubject.lectureCount !== Number(lectureCount)
       || initialSubject.seminarCount !== Number(seminarCount)
@@ -139,140 +141,159 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = 
     })
   }
 
+  const title = isCopyMode ? 'Fənni kopyala' : isEditMode ? 'Fənni redaktə et' : 'Yeni fənn'
+  const submitLabel = isCopyMode ? 'Kopyanı yarat' : isEditMode ? 'Yadda saxla' : 'Fənni əlavə et'
+
   return (
     <div
-      className='fixed inset-0 z-10 flex items-center justify-center bg-black/50 p-[20px]'
+      className='modal-overlay-in fixed inset-0 z-10 flex items-center justify-center bg-black/50 p-[20px]'
       role='dialog'
       aria-modal='true'
       aria-labelledby='new-subject-title'
     >
       <form
         onSubmit={handleSubmit}
-        className='max-h-[90vh] w-full max-w-[520px] overflow-y-auto rounded-[8px] bg-[#FFF] p-[25px] text-[#333] shadow-lg'
+        className='modal-card-in flex max-h-[90vh] w-full max-w-[520px] flex-col overflow-hidden rounded-[14px] bg-[#FFF] text-[#333] shadow-xl'
       >
-        <div className='mb-[20px] flex items-center justify-between'>
-          <h2 id='new-subject-title' className='text-[22px] font-bold'>
-            {isCopyMode ? 'Fənni kopyala' : isEditMode ? 'Fənni redaktə et' : 'Yeni fənn'}
-          </h2>
+        <div className='flex shrink-0 items-center justify-between border-b border-[#EEE] bg-[#FFF] px-[24px] py-[18px]'>
+          <h2 id='new-subject-title' className='text-[20px] font-bold text-[#434140]'>{title}</h2>
           <button
             type='button'
             onClick={onClose}
             aria-label='Modalı bağla'
-            className='flex h-[32px] w-[32px] items-center justify-center rounded-[4px] text-[20px] leading-none text-[#434140] hover:bg-[#EEE]'
+            className='flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[#F1EFE9] text-[18px] text-[#434140] hover:bg-[#E4E0D6]'
           >
             <FiX aria-hidden='true' />
           </button>
         </div>
-
-        <label className='mb-[15px] block'>
-          <span className='mb-[5px] block font-medium'>Fənnin adı:</span>
+        <div className='overflow-y-auto p-[24px]'>
+        <label className='mb-[16px] block'>
+          <span className='mb-[6px] block text-[13px] font-semibold text-[#434140]'>Fənnin adı</span>
           <input
             type='text'
             placeholder='Verilənlər Bazası'
             value={subjectName}
             onChange={(event) => setSubjectName(event.target.value)}
             required
-            className='w-full rounded-[5px] border border-[#AAA] p-[8px]'
+            className='w-full rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] p-[10px] text-[14px] outline-none focus:border-[#A65B46]'
           />
         </label>
 
-        <div className='mb-[15px] grid grid-cols-1 gap-[10px] sm:grid-cols-2'>
+        <div className='mb-[16px] grid grid-cols-1 gap-[10px] sm:grid-cols-2'>
           <label className='block'>
-            <span className='mb-[5px] block font-medium'>Müəllim:</span>
+            <span className='mb-[6px] block text-[13px] font-semibold text-[#434140]'>Müəllim</span>
             <input
               type='text'
               placeholder='Ad Soyad'
               value={teacher}
               onChange={(event) => setTeacher(event.target.value)}
-              className='w-full rounded-[5px] border border-[#AAA] p-[8px]'
+              className='w-full rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] p-[10px] text-[14px] outline-none focus:border-[#A65B46]'
             />
           </label>
           <label className='block'>
-            <span className='mb-[5px] block font-medium'>Otaq:</span>
+            <span className='mb-[6px] block text-[13px] font-semibold text-[#434140]'>Otaq</span>
             <input
               type='text'
               placeholder='m. 301'
               value={room}
               onChange={(event) => setRoom(event.target.value)}
-              className='w-full rounded-[5px] border border-[#AAA] p-[8px]'
+              className='w-full rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] p-[10px] text-[14px] outline-none focus:border-[#A65B46]'
             />
           </label>
         </div>
 
-        <fieldset className='mb-[15px]'>
-          <legend className='mb-[8px] font-medium'>Dərs nisbəti:</legend>
-          <div className='flex gap-[15px]'>
-            <label>
-              <span className='mr-[5px]'>Mühazirə sayı:</span>
-              <input type='number' min='0' value={lectureCount} onChange={(event) => setLectureCount(Number(event.target.value))} className='w-[60px] rounded-[5px] border border-[#AAA] p-[2px]' />
+        <fieldset className='mb-[16px]'>
+          <legend className='mb-[10px] text-[14px] font-bold text-[#434140]'>Dərs nisbəti</legend>
+          <div className='flex gap-[10px]'>
+            <label className='flex-1 rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] focus-within:border-[#A65B46]'>
+              <span className='mb-[4px] block text-[13px] font-semibold text-[#434140]'>Mühazirə sayı</span>
+              <input type='number' min='0' value={lectureCount} onChange={(event) => setLectureCount(Number(event.target.value))} className='w-full bg-transparent text-[16px] font-bold text-[#434140] outline-none' />
             </label>
-            <label>
-              <span className='mr-[5px]'>Seminar sayı:</span>
-              <input type='number' min='0' value={seminarCount} onChange={(event) => setSeminarCount(Number(event.target.value))} className='w-[60px] rounded-[5px] border border-[#AAA] p-[2px]' />
+            <label className='flex-1 rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] focus-within:border-[#A65B46]'>
+              <span className='mb-[4px] block text-[13px] font-semibold text-[#434140]'>Seminar sayı</span>
+              <input type='number' min='0' value={seminarCount} onChange={(event) => setSeminarCount(Number(event.target.value))} className='w-full bg-transparent text-[16px] font-bold text-[#434140] outline-none' />
             </label>
           </div>
         </fieldset>
 
-        <fieldset className='mb-[15px]'>
-          <legend className='mb-[8px] font-medium'>Cədvəl:</legend>
-          <div className='mb-[6px] grid grid-cols-[minmax(0,1fr)_105px_14px_105px] items-center gap-[8px] px-[2px] text-[12px] text-[#777]'>
-            <span />
-            <span>Başlanğıc</span>
-            <span />
-            <span>Bitiş</span>
-          </div>
-          <div className='flex flex-col gap-[7px]'>
-            {days.map((day) => (
-              <div key={day} className='grid grid-cols-[minmax(0,1fr)_105px_14px_105px] items-center gap-[8px]'>
-                <label className='flex min-w-0 items-center gap-[7px]'>
-                  <input
-                    type='checkbox'
-                    checked={selectedDays.includes(day)}
-                    onChange={() => handleDayToggle(day)}
-                  />
-                  <span className='truncate'>{day}</span>
-                </label>
-                <input
-                  type='time'
-                  value={dayDetails[day]?.startTime || ''}
-                  onChange={(event) => updateDayTime(day, event.target.value)}
-                  disabled={!selectedDays.includes(day)}
-                  required={selectedDays.includes(day)}
-                  aria-label={`${day} üçün başlanğıc saatı`}
-                  className='w-full rounded-[6px] border border-[#AAA] bg-[#FFF] p-[6px] text-[14px] disabled:bg-[#EEE]'
-                />
-                <span className='text-center text-[#777]'>-</span>
-                <input
-                  type='time'
-                  value={dayDetails[day]?.endTime || ''}
-                  onChange={(event) => updateDayEndTime(day, event.target.value)}
-                  disabled={!selectedDays.includes(day)}
-                  required={selectedDays.includes(day)}
-                  aria-label={`${day} üçün bitiş saatı`}
-                  className='w-full rounded-[6px] border border-[#AAA] bg-[#FFF] p-[6px] text-[14px] disabled:bg-[#EEE]'
-                />
-              </div>
-            ))}
+        <fieldset className='mb-[16px]'>
+          <legend className='mb-[10px] text-[14px] font-bold text-[#434140]'>Cədvəl</legend>
+          <div className='flex flex-col gap-[8px]'>
+            {days.map((day) => {
+              const selected = selectedDays.includes(day)
+              return (
+                <div key={day} className={`rounded-[8px] border p-[10px] ${selected ? 'border-[#A65B46] bg-[#FDF8F5]' : 'border-[#EEE] bg-[#FFF]'}`}>
+                  <label className='flex cursor-pointer items-center gap-[8px]'>
+                    <input
+                      type='checkbox'
+                      checked={selected}
+                      onChange={() => handleDayToggle(day)}
+                      className='h-[16px] w-[16px] shrink-0 accent-[#A65B46]'
+                    />
+                    <span className='text-[14px] font-medium'>{day}</span>
+                  </label>
+                  {selected && (
+                    <div className='mt-[10px] grid grid-cols-[1fr_14px_1fr] items-center gap-[8px]'>
+                      <input
+                        type='time'
+                        value={dayDetails[day]?.startTime || ''}
+                        onChange={(event) => updateDayTime(day, event.target.value)}
+                        required
+                        aria-label={`${day} üçün başlanğıc saatı`}
+                        className='w-full rounded-[6px] border border-[#D8D5CE] bg-[#FFF] p-[8px] text-[14px] outline-none focus:border-[#A65B46]'
+                      />
+                      <span className='text-center text-[#999]'>-</span>
+                      <input
+                        type='time'
+                        value={dayDetails[day]?.endTime || ''}
+                        onChange={(event) => updateDayEndTime(day, event.target.value)}
+                        required
+                        aria-label={`${day} üçün bitiş saatı`}
+                        className='w-full rounded-[6px] border border-[#D8D5CE] bg-[#FFF] p-[8px] text-[14px] outline-none focus:border-[#A65B46]'
+                      />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </fieldset>
 
         <fieldset className='mb-[20px]'>
-          <legend className='mb-[8px] font-medium'>Həftə tezliyi:</legend>
-          <div className='flex flex-col gap-[6px]'>
-            <label><input type='radio' name='frequency' value='every-week' checked={frequency === 'every-week'} onChange={(event) => setFrequency(event.target.value)} className='mr-[6px]' />Hər həftə</label>
-            <label><input type='radio' name='frequency' value='upper-week' checked={frequency === 'upper-week'} onChange={(event) => setFrequency(event.target.value)} className='mr-[6px]' />Yalnız Üst həftə</label>
-            <label><input type='radio' name='frequency' value='lower-week' checked={frequency === 'lower-week'} onChange={(event) => setFrequency(event.target.value)} className='mr-[6px]' />Yalnız Alt həftə</label>
+          <legend className='mb-[10px] text-[14px] font-bold text-[#434140]'>Həftə tezliyi</legend>
+          <div className='flex flex-col gap-[8px]'>
+            {[
+              { value: 'every-week', label: 'Hər həftə' },
+              { value: 'upper-week', label: 'Yalnız Üst həftə' },
+              { value: 'lower-week', label: 'Yalnız Alt həftə' },
+            ].map((option) => (
+              <label
+                key={option.value}
+                className={`flex cursor-pointer items-center gap-[10px] rounded-[8px] border px-[12px] py-[10px] text-[14px] ${frequency === option.value ? 'border-[#A65B46] bg-[#FDF8F5] font-medium' : 'border-[#D8D5CE] bg-[#FFF]'}`}
+              >
+                <input
+                  type='radio'
+                  name='frequency'
+                  value={option.value}
+                  checked={frequency === option.value}
+                  onChange={(event) => setFrequency(event.target.value)}
+                  className='h-[16px] w-[16px] shrink-0 accent-[#A65B46]'
+                />
+                {option.label}
+              </label>
+            ))}
           </div>
         </fieldset>
 
-        {error && <p className='mb-[15px] rounded-[5px] bg-[#FCE5E0] p-[8px] text-[#A65B46]'>{error}</p>}
+        {error && <p className='mb-[16px] rounded-[8px] bg-[#FCE5E0] p-[10px] text-[14px] text-[#A65B46]'>{error}</p>}
 
         <button
           type='submit'
-          className='w-full rounded-[5px] bg-[#434140] py-[9px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
+          className='w-full rounded-[8px] bg-[#434140] py-[12px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
         >
-          {isCopyMode ? 'Kopyanı yarat' : isEditMode ? 'Yadda saxla' : 'Fənni əlavə et'}
+          {submitLabel}
         </button>
+        </div>
       </form>
     </div>
   )

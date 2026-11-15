@@ -52,3 +52,62 @@
 .highlight-flash {
   animation: schedule-highlight 3.2s ease forwards;
 }
+
+/* Modal açılış animasiyaları */
+@keyframes modal-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-overlay-in {
+  animation: modal-overlay-in 0.18s ease-out;
+}
+
+.modal-card-in {
+  animation: modal-card-in 0.24s cubic-bezier(0.21, 1.02, 0.73, 1);
+}
+
+/* Həftə dəyişəndə cədvəlin yumşaq yenilənməsi */
+@keyframes week-fade {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.week-fade {
+  animation: week-fade 0.18s ease-out;
+}
+
+/* Düymələrdə rəng keçidləri */
+button {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
