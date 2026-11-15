@@ -113,7 +113,6 @@ export const normalizeSubject = (raw) => {
     schedule,
     teacher: toCleanString(raw.teacher),
     room: toCleanString(raw.room),
-    color: toCleanString(raw.color) || '#A65B46',
     sequenceOffset: Number(raw.sequenceOffset) || 0,
     overrides,
   }

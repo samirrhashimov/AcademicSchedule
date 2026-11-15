@@ -44,7 +44,7 @@ const SearchModal = ({ subjects, onClose }) => {
             type='button'
             onClick={onClose}
             aria-label='Bağla'
-            className='text-[24px] leading-none'
+            className='rounded-[4px] px-[4px] text-[24px] leading-none hover:bg-[#EEE]'
           >
             ×
           </button>
@@ -69,15 +69,9 @@ const SearchModal = ({ subjects, onClose }) => {
             <div className='flex flex-col gap-[10px]'>
               {results.map((subject) => (
                 <div key={subject.id} className='rounded-[6px] border border-[#DDD] p-[10px]'>
-                  <p className='flex items-center gap-[6px] font-medium'>
-                    <span
-                      className='inline-block h-[10px] w-[10px] shrink-0 rounded-full'
-                      style={{ backgroundColor: subject.color || '#A65B46' }}
-                    />
-                    <span className='truncate'>{subject.name}</span>
-                  </p>
+                  <p className='truncate font-medium'>{subject.name}</p>
                   <p className='mt-[2px] text-[12px] text-[#777]'>
-                    {[subject.teacher, subject.room, frequencyLabels[subject.frequency]].filter(Boolean).join(' • ')}
+                    {[subject.teacher && `Müəllim: ${subject.teacher}`, subject.room && `Otaq: ${subject.room}`, frequencyLabels[subject.frequency]].filter(Boolean).join(' • ')}
                   </p>
                   <ul className='mt-[6px] flex flex-col gap-[4px]'>
                     {subject.schedule.map((lesson, lessonIndex) => {

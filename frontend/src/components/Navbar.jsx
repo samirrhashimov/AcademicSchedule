@@ -19,14 +19,14 @@ const Navbar = ({ subjects, onAddSubject }) => {
             onClick={() => setIsSearchOpen(true)}
             aria-label='Axtar'
             title='Axtar'
-            className='p-[4px] text-[22px] leading-none text-[#434140]'
+            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF]'
           >
             <FiSearch aria-hidden='true' />
           </button>
           <button
             type='button'
             onClick={() => setIsModalOpen(true)}
-            className='font-[Inter] rounded-[5px] bg-[#434140] px-[10px] py-[5px] font-medium text-[#E7D8C6]'
+            className='font-[Inter] rounded-[5px] bg-[#434140] px-[10px] py-[5px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
           >
             + Yeni Fənn
           </button>

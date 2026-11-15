@@ -61,7 +61,6 @@ describe('normalizeSubject', () => {
       seminarCount: 1,
       teacher: 'A',
       room: '301',
-      color: '#123456',
       sequenceOffset: 1,
       overrides: { 5: 'seminar', x: 'lecture', 7: 'pis' },
       schedule: [{ day: 'A', startTime: '10:00', endTime: '11:00' }],

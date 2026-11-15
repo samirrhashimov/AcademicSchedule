@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiCopy, FiEdit2, FiTrash2 } from 'react-icons/fi'
 import NewSubjectModal from './NewSubjectModal'
 import { getSequenceIndex, resolveLessonType } from '../lib/subjects'
 import {
@@ -62,10 +62,51 @@ const toMinutes = (time) => {
     return hour * 60 + (minute || 0)
 }
 
-const getDurationMinutes = (lesson) => {
+const HOUR_PX = 82
+
+const getEndTime = (lesson) => {
     const startTime = getStartTime(lesson)
-    const endTime = lesson.endTime || `${String(Number(startTime.split(':')[0]) + 1).padStart(2, '0')}:${startTime.split(':')[1]}`
-    return Math.max(toMinutes(endTime) - toMinutes(startTime), 60)
+    return lesson.endTime || `${String(Number(startTime.split(':')[0]) + 1).padStart(2, '0')}:${startTime.split(':')[1]}`
+}
+
+// Üst-üstə düşən dərsləri gün sütununda yan-yana düzür (lane/laneCount).
+const layoutDayEvents = (events) => {
+    const positioned = []
+    let cluster = []
+    let clusterEnd = -1
+    const flushCluster = () => {
+        const laneEnds = []
+        for (const ev of cluster) {
+            const start = toMinutes(getStartTime(ev.lesson))
+            const end = toMinutes(getEndTime(ev.lesson))
+            let lane = laneEnds.findIndex((laneEnd) => laneEnd <= start)
+            if (lane === -1) {
+                laneEnds.push(end)
+                lane = laneEnds.length - 1
+            } else {
+                laneEnds[lane] = end
+            }
+            positioned.push({ ...ev, lane, laneCount: 0, start, end })
+        }
+        const count = Math.max(laneEnds.length, 1)
+        for (let i = positioned.length - cluster.length; i < positioned.length; i += 1) {
+            positioned[i].laneCount = count
+        }
+        cluster = []
+        clusterEnd = -1
+    }
+    for (const ev of events) {
+        const start = toMinutes(getStartTime(ev.lesson))
+        if (cluster.length > 0 && start >= clusterEnd) {
+            flushCluster()
+        }
+        cluster.push(ev)
+        clusterEnd = Math.max(clusterEnd, toMinutes(getEndTime(ev.lesson)))
+    }
+    if (cluster.length > 0) {
+        flushCluster()
+    }
+    return positioned
 }
 
 const isOverridden = (subject, sequenceIndex) => (
@@ -119,7 +160,7 @@ const findConflicts = (activeSubjects) => {
     return conflicts
 }
 
-const SubjectMenu = ({ subjects, onRemoveSubject, onEditSubject, onDuplicateSubject, onHideSidebar }) => (
+const SubjectMenu = ({ subjects, onRequestRemoveSubject, onEditSubject, onDuplicateSubject, onHideSidebar }) => (
     <aside className='w-full rounded-[8px] bg-[#434140] p-[15px] text-[#FFF] lg:w-[245px]'>
         <div className='mb-[15px] flex items-center justify-between gap-[8px]'>
             <span className='flex items-center gap-[8px]'>
@@ -131,7 +172,7 @@ const SubjectMenu = ({ subjects, onRemoveSubject, onEditSubject, onDuplicateSubj
                 onClick={onHideSidebar}
                 aria-label='Paneli gizlət'
                 title='Paneli gizlət'
-                className='p-[4px] text-[20px] leading-none text-[#E7D8C6]'
+                className='p-[4px] text-[20px] leading-none text-[#E7D8C6] hover:text-[#FFF]'
             >
                 <FiChevronsLeft aria-hidden='true' />
             </button>
@@ -142,43 +183,48 @@ const SubjectMenu = ({ subjects, onRemoveSubject, onEditSubject, onDuplicateSubj
             <div className='flex flex-col gap-[8px]'>
                 {subjects.map((subject) => (
                     <div key={subject.id} className='rounded-[6px] bg-[#FFF] p-[10px] text-[#333]'>
-                        <p className='flex items-center gap-[6px] font-medium'>
-                            <span
-                                className='inline-block h-[10px] w-[10px] shrink-0 rounded-full'
-                                style={{ backgroundColor: subject.color || '#A65B46' }}
-                            />
-                            <span className='truncate'>{subject.name}</span>
-                        </p>
-                        <p className='mt-[3px] text-[12px] text-[#777]'>
-                            {subject.lectureCount} müh., {subject.seminarCount} sem.
-                        </p>
-                        {(subject.teacher || subject.room) && (
-                            <p className='mt-[2px] truncate text-[12px] text-[#777]'>
-                                {[subject.teacher, subject.room].filter(Boolean).join(' • ')}
-                            </p>
-                        )}
-                        <div className='mt-[8px] flex gap-[6px]'>
-                            <button
-                                type='button'
-                                onClick={() => onEditSubject(subject)}
-                                className='rounded-[4px] bg-[#E3F1EC] px-[8px] py-[3px] text-[12px] font-medium text-[#477A68]'
-                            >
-                                Redaktə
-                            </button>
-                            <button
-                                type='button'
-                                onClick={() => onDuplicateSubject(subject.id)}
-                                className='rounded-[4px] bg-[#EEE] px-[8px] py-[3px] text-[12px] font-medium text-[#555]'
-                            >
-                                Dublikat
-                            </button>
-                            <button
-                                type='button'
-                                onClick={() => onRemoveSubject(subject.id)}
-                                className='rounded-[4px] bg-[#FCE5E0] px-[8px] py-[3px] text-[12px] font-medium text-[#A65B46]'
-                            >
-                                Sil
-                            </button>
+                        <div className='flex items-start justify-between gap-[8px]'>
+                            <div className='min-w-0'>
+                                <p className='truncate font-medium'>{subject.name}</p>
+                                <p className='mt-[3px] text-[12px] text-[#777]'>
+                                    {subject.lectureCount} müh., {subject.seminarCount} sem.
+                                </p>
+                                {(subject.teacher || subject.room) && (
+                                    <p className='mt-[2px] text-[12px] text-[#777]'>
+                                        {subject.teacher && <span className='block truncate'>Müəllim: {subject.teacher}</span>}
+                                        {subject.room && <span className='block truncate'>Otaq: {subject.room}</span>}
+                                    </p>
+                                )}
+                            </div>
+                            <div className='flex shrink-0 flex-col gap-[6px]'>
+                                <button
+                                    type='button'
+                                    onClick={() => onEditSubject(subject)}
+                                    aria-label='Redaktə et'
+                                    title='Redaktə et'
+                                    className='rounded-[4px] bg-[#E3F1EC] p-[6px] text-[15px] leading-none text-[#477A68] hover:bg-[#D4E6DC]'
+                                >
+                                    <FiEdit2 aria-hidden='true' />
+                                </button>
+                                <button
+                                    type='button'
+                                    onClick={() => onDuplicateSubject(subject)}
+                                    aria-label='Dublikat yarat'
+                                    title='Dublikat yarat'
+                                    className='rounded-[4px] bg-[#EEE] p-[6px] text-[15px] leading-none text-[#555] hover:bg-[#DFDFDF]'
+                                >
+                                    <FiCopy aria-hidden='true' />
+                                </button>
+                                <button
+                                    type='button'
+                                    onClick={() => onRequestRemoveSubject(subject)}
+                                    aria-label='Fənni sil'
+                                    title='Fənni sil'
+                                    className='rounded-[4px] bg-[#FCE5E0] p-[6px] text-[15px] leading-none text-[#A65B46] hover:bg-[#F6D9D2]'
+                                >
+                                    <FiTrash2 aria-hidden='true' />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -192,19 +238,13 @@ const CalendarEvent = ({ subject, lesson, sequenceIndex, onRequestTypeChange }) 
     const overridden = isOverridden(subject, sequenceIndex)
 
     return (
-    <div style={{ minHeight: `${Math.max((getDurationMinutes(lesson) / 60) * 82 - 8, 66)}px` }} className={`rounded-[5px] border-l-[4px] p-[7px] text-[13px] ${
+    <div className={`h-full overflow-hidden rounded-[5px] border-l-[4px] p-[7px] text-[13px] ${
         type === 'lecture'
             ? 'border-[#A65B46] bg-[#FCE5E0]'
             : 'border-[#477A68] bg-[#E3F1EC]'
     }`}>
         <p className='font-bold'>{getStartTime(lesson)} - {lesson.endTime || 'növbəti saat'}</p>
-        <p className='truncate font-medium'>
-            <span
-                className='mr-[5px] inline-block h-[8px] w-[8px] rounded-full align-middle'
-                style={{ backgroundColor: subject.color || '#A65B46' }}
-            />
-            {subject.name}
-        </p>
+        <p className='truncate font-medium'>{subject.name}</p>
         {(subject.teacher || subject.room) && (
             <p className='truncate text-[12px] text-[#666]'>
                 {[subject.teacher, subject.room].filter(Boolean).join(' • ')}
@@ -256,21 +296,21 @@ const TypeChangeDialog = ({ pending, onChoose, onCancel }) => {
                     <button
                         type='button'
                         onClick={() => onChoose('once')}
-                        className='rounded-[5px] border border-[#477A68] px-[10px] py-[8px] text-[14px] font-medium text-[#477A68]'
+                        className='rounded-[5px] border border-[#477A68] px-[10px] py-[8px] text-[14px] font-medium text-[#477A68] hover:bg-[#E3F1EC]'
                     >
                         Bir dəfəlik — yalnız bu həftəki dərs
                     </button>
                     <button
                         type='button'
                         onClick={() => onChoose('always')}
-                        className='rounded-[5px] bg-[#434140] px-[10px] py-[8px] text-[14px] font-medium text-[#E7D8C6]'
+                        className='rounded-[5px] bg-[#434140] px-[10px] py-[8px] text-[14px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
                     >
                         Həmişə — bu gündən etibarən nisbətlə davam etsin
                     </button>
                     <button
                         type='button'
                         onClick={onCancel}
-                        className='rounded-[5px] px-[10px] py-[8px] text-[14px] text-[#777]'
+                        className='rounded-[5px] px-[10px] py-[8px] text-[14px] text-[#777] hover:bg-[#EEE]'
                     >
                         Ləğv et
                     </button>
@@ -305,21 +345,21 @@ const WeekTypeChangeDialog = ({ pending, currentLabel, onChoose, onCancel }) => 
                     <button
                         type='button'
                         onClick={() => onChoose('once')}
-                        className='rounded-[5px] border border-[#477A68] px-[10px] py-[8px] text-[14px] font-medium text-[#477A68]'
+                        className='rounded-[5px] border border-[#477A68] px-[10px] py-[8px] text-[14px] font-medium text-[#477A68] hover:bg-[#E3F1EC]'
                     >
                         İstisna — yalnız bu həftə
                     </button>
                     <button
                         type='button'
                         onClick={() => onChoose('always')}
-                        className='rounded-[5px] bg-[#434140] px-[10px] py-[8px] text-[14px] font-medium text-[#E7D8C6]'
+                        className='rounded-[5px] bg-[#434140] px-[10px] py-[8px] text-[14px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
                     >
                         Həmişə — bu həftədən etibarən o sıra ilə davam etsin
                     </button>
                     <button
                         type='button'
                         onClick={onCancel}
-                        className='rounded-[5px] px-[10px] py-[8px] text-[14px] text-[#777]'
+                        className='rounded-[5px] px-[10px] py-[8px] text-[14px] text-[#777] hover:bg-[#EEE]'
                     >
                         Ləğv et
                     </button>
@@ -329,7 +369,45 @@ const WeekTypeChangeDialog = ({ pending, currentLabel, onChoose, onCancel }) => 
     )
 }
 
-const Dashboard = ({ subjects, onRemoveSubject, onUpdateSubject, onDuplicateSubject, onApplyLessonType }) => {
+const DeleteConfirmDialog = ({ subject, onConfirm, onCancel }) => {
+    if (!subject) {
+        return null
+    }
+
+    return (
+        <div
+            className='fixed inset-0 z-20 flex items-center justify-center bg-black/50 p-[20px]'
+            role='dialog'
+            aria-modal='true'
+            aria-labelledby='delete-confirm-title'
+        >
+            <div className='w-full max-w-[380px] rounded-[8px] bg-[#FFF] p-[20px] text-[#333] shadow-lg'>
+                <h2 id='delete-confirm-title' className='mb-[8px] text-[18px] font-bold'>Fənni sil</h2>
+                <p className='mb-[15px] text-[14px]'>
+                    “<strong>{subject.name}</strong>” silinsin? Əminsən?
+                </p>
+                <div className='flex flex-col gap-[8px]'>
+                    <button
+                        type='button'
+                        onClick={onConfirm}
+                        className='rounded-[5px] bg-[#A65B46] px-[10px] py-[8px] text-[14px] font-medium text-[#FFF] hover:bg-[#96543F]'
+                    >
+                        Bəli, sil
+                    </button>
+                    <button
+                        type='button'
+                        onClick={onCancel}
+                        className='rounded-[5px] px-[10px] py-[8px] text-[14px] text-[#777] hover:bg-[#EEE]'
+                    >
+                        Ləğv et
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, onApplyLessonType }) => {
     const today = new Date()
     const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate())
     const currentWeekStart = getMonday(today)
@@ -339,6 +417,8 @@ const Dashboard = ({ subjects, onRemoveSubject, onUpdateSubject, onDuplicateSubj
     const [editingSubject, setEditingSubject] = useState(null)
     const [pendingChange, setPendingChange] = useState(null)
     const [pendingWeekChange, setPendingWeekChange] = useState(null)
+    const [pendingDeleteSubject, setPendingDeleteSubject] = useState(null)
+    const [copyingSubject, setCopyingSubject] = useState(null)
     const [sidebarOpen, setSidebarOpen] = useState(() => {
         try {
             return localStorage.getItem('academic-schedule-sidebar-open') !== '0'
@@ -554,9 +634,13 @@ const Dashboard = ({ subjects, onRemoveSubject, onUpdateSubject, onDuplicateSubj
                 <div className={`shrink-0 overflow-hidden transition-[width,opacity] duration-300 ease-in-out ${sidebarOpen ? 'w-full opacity-100 lg:w-[245px]' : 'hidden opacity-0 lg:block lg:h-auto lg:w-0'}`}>
                     <SubjectMenu
                         subjects={subjects}
-                        onRemoveSubject={onRemoveSubject}
+                        onRequestRemoveSubject={setPendingDeleteSubject}
                         onEditSubject={setEditingSubject}
-                        onDuplicateSubject={onDuplicateSubject}
+                        onDuplicateSubject={(subject) => setCopyingSubject({
+                            ...subject,
+                            schedule: subject.schedule.map((lesson) => ({ ...lesson })),
+                            name: `${subject.name} (nüsxə)`,
+                        })}
                         onHideSidebar={toggleSidebar}
                     />
                 </div>
@@ -565,10 +649,11 @@ const Dashboard = ({ subjects, onRemoveSubject, onUpdateSubject, onDuplicateSubj
                         <button
                             type='button'
                             onClick={toggleSidebar}
-                            className='mb-[10px] flex items-center gap-[6px] rounded-[6px] bg-[#434140] px-[10px] py-[6px] text-[13px] font-medium text-[#E7D8C6]'
+                            aria-label='Fənlərim panelini aç'
+                            title='Fənlərim'
+                            className='fixed left-0 top-1/2 z-10 -translate-y-1/2 rounded-r-[8px] bg-[#434140] px-[8px] py-[14px] text-[18px] text-[#E7D8C6] shadow-md hover:bg-[#555250]'
                         >
                             <FiChevronsRight aria-hidden='true' />
-                            Fənlərim
                         </button>
                     )}
                     <div className='mb-[10px] flex items-center justify-between'>
@@ -610,15 +695,15 @@ const Dashboard = ({ subjects, onRemoveSubject, onUpdateSubject, onDuplicateSubj
                             </div>
                             <div className='flex items-center gap-[6px]'>
                                 <div className='flex overflow-hidden rounded-[5px] border border-[#A65B46] text-[12px]'>
-                                    <button type='button' onClick={() => requestWeekModeChange('upper-week')} className={`px-[10px] py-[5px] ${viewedMode === 'upper-week' ? 'bg-[#A65B46] font-bold text-[#FFF]' : 'bg-[#FFF] text-[#A65B46]'}`}>Üst həftə</button>
-                                    <button type='button' onClick={() => requestWeekModeChange('lower-week')} className={`px-[10px] py-[5px] ${viewedMode === 'lower-week' ? 'bg-[#A65B46] font-bold text-[#FFF]' : 'bg-[#FFF] text-[#A65B46]'}`}>Alt həftə</button>
+                                    <button type='button' onClick={() => requestWeekModeChange('upper-week')} className={`px-[10px] py-[5px] ${viewedMode === 'upper-week' ? 'bg-[#A65B46] font-bold text-[#FFF] hover:bg-[#96543F]' : 'bg-[#FFF] text-[#A65B46] hover:bg-[#F7F3EC]'}`}>Üst həftə</button>
+                                    <button type='button' onClick={() => requestWeekModeChange('lower-week')} className={`px-[10px] py-[5px] ${viewedMode === 'lower-week' ? 'bg-[#A65B46] font-bold text-[#FFF] hover:bg-[#96543F]' : 'bg-[#FFF] text-[#A65B46] hover:bg-[#F7F3EC]'}`}>Alt həftə</button>
                                 </div>
                                 {viewedWeekType.isOverride && (
                                     <button
                                         type='button'
                                         onClick={clearWeekOverride}
                                         title='Avtomatik növbələşməyə qayıt'
-                                        className='rounded-[5px] border border-[#AAA] px-[8px] py-[4px] text-[12px] text-[#434140]'
+                                        className='rounded-[5px] border border-[#AAA] px-[8px] py-[4px] text-[12px] text-[#434140] hover:bg-[#EEE]'
                                     >
                                         Avto
                                     </button>
@@ -633,7 +718,7 @@ const Dashboard = ({ subjects, onRemoveSubject, onUpdateSubject, onDuplicateSubj
                                 key={day}
                                 type='button'
                                 onClick={() => setMobileDay(day)}
-                                className={`shrink-0 rounded-[5px] px-[10px] py-[6px] text-[12px] ${mobileDay === day ? 'bg-[#434140] text-[#FFF]' : 'bg-[#EEE] text-[#333]'}`}
+                                className={`shrink-0 rounded-[5px] px-[10px] py-[6px] text-[12px] ${mobileDay === day ? 'bg-[#434140] text-[#FFF] hover:bg-[#555250]' : 'bg-[#EEE] text-[#333] hover:bg-[#DFDFDF]'}`}
                             >
                                 {day}
                             </button>
@@ -669,35 +754,71 @@ const Dashboard = ({ subjects, onRemoveSubject, onUpdateSubject, onDuplicateSubj
                                 ))}
                             </div>
 
-                            {hours.map((hour) => (
-                                <div key={hour} className='grid min-h-[82px] grid-cols-[65px_repeat(7,minmax(130px,1fr))]'>
-                                    <div className='border-b border-r border-[#DDD] p-[8px] text-right text-[12px] text-[#777]'>
-                                        {String(hour).padStart(2, '0')}:00
-                                    </div>
-                                    {weekDays.map(({ name }) => (
-                                        <div key={`${name}-${hour}`} className='border-b border-r border-[#DDD] p-[4px]'>
-                                            {activeSubjects.flatMap((subject) => (
-                                                subject.schedule
-                                                    .map((lesson, lessonIndex) => ({
-                                                        subject,
-                                                        lesson,
-                                                        sequenceIndex: getSequenceIndex(subject, lessonIndex, viewedWeekNumber),
-                                                    }))
-                                                    .filter(({ lesson }) => lesson.day === name && getTimeHour(lesson) === hour)
-                                                    .map(({ subject, lesson, sequenceIndex }) => (
-                                                        <CalendarEvent
-                                                            key={`${subject.id}-${sequenceIndex}`}
-                                                            subject={subject}
-                                                            lesson={lesson}
-                                                            sequenceIndex={sequenceIndex}
-                                                            onRequestTypeChange={requestTypeChange}
-                                                        />
-                                                    ))
-                                            ))}
+                            <div className='grid grid-cols-[65px_repeat(7,minmax(130px,1fr))]'>
+                                <div className='relative' style={{ height: `${hours.length * HOUR_PX}px` }}>
+                                    {hours.map((hour) => (
+                                        <div
+                                            key={hour}
+                                            className='absolute right-[8px] text-right text-[12px] text-[#777]'
+                                            style={{ top: `${(hour - hours[0]) * HOUR_PX - 9}px` }}
+                                        >
+                                            {String(hour).padStart(2, '0')}:00
                                         </div>
                                     ))}
                                 </div>
-                            ))}
+                                {weekDays.map(({ name, date }) => {
+                                    const isTodayColumn = date.toDateString() === today.toDateString()
+                                    const positioned = layoutDayEvents(lessonsIn(activeSubjects, name, viewedWeekNumber))
+                                    const showNowLine = isTodayColumn
+                                        && nowMinutes >= hours[0] * 60
+                                        && nowMinutes <= (hours[hours.length - 1] + 1) * 60
+                                    const nowY = ((nowMinutes - hours[0] * 60) / 60) * HOUR_PX
+                                    return (
+                                        <div
+                                            key={name}
+                                            className={`relative border-l border-[#DDD] ${isTodayColumn ? 'bg-[#FCE5E0]/50' : ''}`}
+                                            style={{ height: `${hours.length * HOUR_PX}px` }}
+                                        >
+                                            {hours.map((hour) => (
+                                                <div
+                                                    key={hour}
+                                                    className='absolute left-0 right-0 border-t border-[#DDD]'
+                                                    style={{ top: `${(hour - hours[0]) * HOUR_PX}px` }}
+                                                />
+                                            ))}
+                                            {positioned.map(({ subject, lesson, sequenceIndex, lane, laneCount, start, end }) => (
+                                                <div
+                                                    key={`${subject.id}-${sequenceIndex}`}
+                                                    className='absolute'
+                                                    style={{
+                                                        top: `${((start - hours[0] * 60) / 60) * HOUR_PX + 3}px`,
+                                                        height: `${Math.max(((end - start) / 60) * HOUR_PX - 6, 60)}px`,
+                                                        left: `calc(${(lane / laneCount) * 100}% + 3px)`,
+                                                        width: `calc(${100 / laneCount}% - 6px)`,
+                                                    }}
+                                                >
+                                                    <CalendarEvent
+                                                        subject={subject}
+                                                        lesson={lesson}
+                                                        sequenceIndex={sequenceIndex}
+                                                        onRequestTypeChange={requestTypeChange}
+                                                    />
+                                                </div>
+                                            ))}
+                                            {showNowLine && (
+                                                <div
+                                                    className='absolute left-0 right-0 z-10 flex items-center'
+                                                    style={{ top: `${nowY}px` }}
+                                                    title={`İndi: ${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`}
+                                                >
+                                                    <div className='h-[9px] w-[9px] shrink-0 rounded-full bg-red-500' />
+                                                    <div className='h-[2px] w-full bg-red-500' />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                            </div>
                         </div>
                     </div>
                     {subjects.length === 0 && (
@@ -721,6 +842,15 @@ const Dashboard = ({ subjects, onRemoveSubject, onUpdateSubject, onDuplicateSubj
                 onCancel={() => setPendingWeekChange(null)}
             />
 
+            <DeleteConfirmDialog
+                subject={pendingDeleteSubject}
+                onConfirm={() => {
+                    onRemoveSubject(pendingDeleteSubject.id)
+                    setPendingDeleteSubject(null)
+                }}
+                onCancel={() => setPendingDeleteSubject(null)}
+            />
+
             {editingSubject && (
                 <NewSubjectModal
                     initialSubject={editingSubject}
@@ -728,6 +858,18 @@ const Dashboard = ({ subjects, onRemoveSubject, onUpdateSubject, onDuplicateSubj
                     onSubmit={(updated) => {
                         onUpdateSubject(updated)
                         setEditingSubject(null)
+                    }}
+                />
+            )}
+
+            {copyingSubject && (
+                <NewSubjectModal
+                    initialSubject={copyingSubject}
+                    copyMode
+                    onClose={() => setCopyingSubject(null)}
+                    onSubmit={(copied) => {
+                        onAddSubject(copied)
+                        setCopyingSubject(null)
                     }}
                 />
             )}

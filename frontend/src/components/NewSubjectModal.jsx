@@ -10,8 +10,6 @@ const days = [
   'Bazar',
 ]
 
-const COLOR_PRESETS = ['#A65B46', '#477A68', '#434140', '#B98A2F', '#5B6BAE', '#8A4FA3']
-
 const buildDayDetails = (schedule = []) => {
   const details = {}
   for (const lesson of schedule) {
@@ -25,8 +23,9 @@ const buildDayDetails = (schedule = []) => {
   return details
 }
 
-const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null }) => {
-  const isEditMode = Boolean(initialSubject)
+const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = false }) => {
+  const isCopyMode = Boolean(copyMode)
+  const isEditMode = Boolean(initialSubject) && !isCopyMode
   const [selectedDays, setSelectedDays] = useState(() => (
     initialSubject ? initialSubject.schedule.map((lesson) => lesson.day) : []
   ))
@@ -37,7 +36,6 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null }) => {
   const [frequency, setFrequency] = useState(initialSubject?.frequency || 'every-week')
   const [teacher, setTeacher] = useState(initialSubject?.teacher || '')
   const [room, setRoom] = useState(initialSubject?.room || '')
-  const [color, setColor] = useState(initialSubject?.color || COLOR_PRESETS[0])
   const [error, setError] = useState('')
 
   const toggleDay = (day) => {
@@ -119,7 +117,7 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null }) => {
 
     onSubmit({
       ...(initialSubject || {}),
-      id: initialSubject?.id || `${Date.now()}-${subjectName.trim()}`,
+      id: isCopyMode ? `${Date.now()}-${subjectName.trim()}` : (initialSubject?.id || `${Date.now()}-${subjectName.trim()}`),
       name: subjectName.trim(),
       lectureCount: Number(lectureCount),
       seminarCount: Number(seminarCount),
@@ -127,8 +125,7 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null }) => {
       schedule,
       teacher: teacher.trim(),
       room: room.trim(),
-      color,
-      overrides: layoutChanged ? {} : (initialSubject?.overrides || {}),
+      overrides: (layoutChanged || isCopyMode) ? {} : (initialSubject?.overrides || {}),
     })
   }
 
@@ -145,13 +142,13 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null }) => {
       >
         <div className='mb-[20px] flex items-center justify-between'>
           <h2 id='new-subject-title' className='text-[22px] font-bold'>
-            {isEditMode ? 'Fənni redaktə et' : 'Yeni fənn'}
+            {isCopyMode ? 'Fənni kopyala' : isEditMode ? 'Fənni redaktə et' : 'Yeni fənn'}
           </h2>
           <button
             type='button'
             onClick={onClose}
             aria-label='Modalı bağla'
-            className='text-[24px] leading-none'
+            className='rounded-[4px] px-[4px] text-[24px] leading-none hover:bg-[#EEE]'
           >
             ×
           </button>
@@ -191,23 +188,6 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null }) => {
             />
           </label>
         </div>
-
-        <fieldset className='mb-[15px]'>
-          <legend className='mb-[8px] font-medium'>Rəng:</legend>
-          <div className='flex gap-[8px]'>
-            {COLOR_PRESETS.map((preset) => (
-              <button
-                key={preset}
-                type='button'
-                onClick={() => setColor(preset)}
-                aria-label={`Rəng ${preset}`}
-                aria-pressed={color === preset}
-                style={{ backgroundColor: preset }}
-                className={`h-[28px] w-[28px] rounded-full ${color === preset ? 'ring-2 ring-offset-2 ring-[#434140]' : ''}`}
-              />
-            ))}
-          </div>
-        </fieldset>
 
         <fieldset className='mb-[15px]'>
           <legend className='mb-[8px] font-medium'>Dərs nisbəti (ardıcıllıq üzrə):</legend>
@@ -283,9 +263,9 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null }) => {
 
         <button
           type='submit'
-          className='w-full rounded-[5px] bg-[#434140] py-[9px] font-medium text-[#E7D8C6]'
+          className='w-full rounded-[5px] bg-[#434140] py-[9px] font-medium text-[#E7D8C6] hover:bg-[#555250]'
         >
-          {isEditMode ? 'Yadda saxla' : 'Fənni əlavə et'}
+          {isCopyMode ? 'Kopyanı yarat' : isEditMode ? 'Yadda saxla' : 'Fənni əlavə et'}
         </button>
       </form>
     </div>

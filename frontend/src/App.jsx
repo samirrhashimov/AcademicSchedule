@@ -62,25 +62,6 @@ function App() {
     }
   }
 
-  const duplicateSubject = (subjectId) => {
-    setSubjects((currentSubjects) => {
-      const source = currentSubjects.find((subject) => subject.id === subjectId)
-      if (!source) {
-        return currentSubjects
-      }
-      return [
-        ...currentSubjects,
-        {
-          ...source,
-          schedule: source.schedule.map((lesson) => ({ ...lesson })),
-          overrides: {},
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          name: `${source.name} (nüsxə)`,
-        },
-      ]
-    })
-  }
-
   const removeSubject = (subjectId) => {
     setSubjects((currentSubjects) => (
       currentSubjects.filter((subject) => subject.id !== subjectId)
@@ -111,9 +92,9 @@ function App() {
       />
       <Dashboard
         subjects={subjects}
+        onAddSubject={addSubject}
         onRemoveSubject={removeSubject}
         onUpdateSubject={updateSubject}
-        onDuplicateSubject={duplicateSubject}
         onApplyLessonType={applyLessonType}
       />
     </div>
