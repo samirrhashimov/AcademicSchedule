@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FiX } from 'react-icons/fi'
 
 const days = [
   'Bazar ertəsi',
@@ -157,9 +158,9 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = 
             type='button'
             onClick={onClose}
             aria-label='Modalı bağla'
-            className='rounded-[4px] px-[4px] text-[24px] leading-none hover:bg-[#EEE]'
+            className='flex h-[32px] w-[32px] items-center justify-center rounded-[4px] text-[20px] leading-none text-[#434140] hover:bg-[#EEE]'
           >
-            ×
+            <FiX aria-hidden='true' />
           </button>
         </div>
 
@@ -199,11 +200,7 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = 
         </div>
 
         <fieldset className='mb-[15px]'>
-          <legend className='mb-[8px] font-medium'>Dərs nisbəti (ardıcıllıq üzrə):</legend>
-          <p className='mb-[8px] text-[12px] text-[#777]'>
-            Dərslər keçirildikcə bu nisbətlə tətbiq olunur. Cədvəldəki bir dərsi dəyişəndə
-            soruşacam: birdəfəlik, yoxsa həmişə.
-          </p>
+          <legend className='mb-[8px] font-medium'>Dərs nisbəti:</legend>
           <div className='flex gap-[15px]'>
             <label>
               <span className='mr-[5px]'>Mühazirə sayı:</span>

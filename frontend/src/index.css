@@ -6,13 +6,8 @@
     margin: 0;
   }
 
-  body {
-    padding: 15mm 22mm !important;
-  }
-
   /* Səhifə qabı çapda boşluq yaratmasın */
   html,
-  body,
   #root,
   .container {
     max-width: 100% !important;
@@ -24,6 +19,11 @@
 
   /* Dialoqlar çapda görünməsin */
   [role="dialog"] {
+    display: none !important;
+  }
+
+  /* Ekran elementləri çapda mütləq gizlənsin (variant sırasından asılı olmayaraq) */
+  .no-print {
     display: none !important;
   }
 

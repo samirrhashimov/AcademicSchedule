@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FiX } from 'react-icons/fi'
 import { getSequenceIndex, resolveLessonType } from '../lib/subjects'
 import { getWeekNumber, mondayOfWeek } from '../lib/weeks'
 
@@ -40,9 +41,9 @@ const SearchModal = ({ subjects, onClose, onSelectLesson }) => {
             type='button'
             onClick={onClose}
             aria-label='Bağla'
-            className='rounded-[4px] px-[4px] text-[24px] leading-none hover:bg-[#EEE]'
+            className='flex h-[32px] w-[32px] items-center justify-center rounded-[4px] text-[20px] leading-none text-[#434140] hover:bg-[#EEE]'
           >
-            ×
+            <FiX aria-hidden='true' />
           </button>
         </div>
 

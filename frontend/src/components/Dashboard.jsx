@@ -363,12 +363,15 @@ const SubjectMenu = ({ subjects, onRequestRemoveSubject, onEditSubject, onDuplic
     </aside>
 )
 
-const CalendarEvent = ({ subject, lesson, sequenceIndex, onRequestTypeChange }) => {
+const CalendarEvent = ({ subject, lesson, sequenceIndex, onRequestTypeChange, onEditSubject }) => {
     const type = resolveLessonType(subject, sequenceIndex)
     const overridden = isOverridden(subject, sequenceIndex)
 
     return (
-    <div className={`print-exact h-full overflow-hidden rounded-[5px] border-l-[4px] p-[7px] text-[13px] ${
+    <div
+        onClick={() => onEditSubject(subject)}
+        title='Redaktə etmək üçün kliklə'
+        className={`print-exact h-full cursor-pointer overflow-hidden rounded-[5px] border-l-[4px] p-[7px] text-[13px] transition-[filter] hover:brightness-95 ${
         type === 'lecture'
             ? 'border-[#A65B46] bg-[#FCE5E0]'
             : 'border-[#477A68] bg-[#E3F1EC]'
@@ -382,6 +385,7 @@ const CalendarEvent = ({ subject, lesson, sequenceIndex, onRequestTypeChange }) 
         )}
         <select
             value={type}
+            onClick={(event) => event.stopPropagation()}
             onChange={(event) => {
                 if (event.target.value !== type) {
                     onRequestTypeChange(subject, lesson, sequenceIndex, event.target.value)
@@ -755,7 +759,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
             )}
 
             <div className={`flex flex-col gap-[15px] lg:flex-row ${sidebarOpen ? 'lg:gap-[15px]' : 'lg:gap-0'}`}>
-                <div className={`shrink-0 overflow-hidden transition-[width,opacity] duration-300 ease-in-out print:hidden ${sidebarOpen ? 'w-full opacity-100 lg:w-[245px]' : 'hidden opacity-0 lg:block lg:h-auto lg:w-0'}`}>
+                <div className={`no-print shrink-0 overflow-hidden transition-[width,opacity] duration-300 ease-in-out ${sidebarOpen ? 'w-full opacity-100 lg:w-[245px]' : 'hidden opacity-0 lg:block lg:h-auto lg:w-0'}`}>
                     <SubjectMenu
                         subjects={subjects}
                         onRequestRemoveSubject={setPendingDeleteSubject}
@@ -775,7 +779,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                             onClick={toggleSidebar}
                             aria-label='Fənlərim panelini aç'
                             title='Fənlərim'
-                            className='fixed left-0 top-1/2 z-10 -translate-y-1/2 rounded-r-[8px] bg-[#434140] px-[8px] py-[14px] text-[18px] text-[#E7D8C6] shadow-md hover:bg-[#555250] print:hidden'
+                            className='no-print fixed left-0 top-1/2 z-10 -translate-y-1/2 rounded-r-[8px] bg-[#434140] px-[8px] py-[14px] text-[18px] text-[#E7D8C6] shadow-md hover:bg-[#555250]'
                         >
                             <FiChevronsRight aria-hidden='true' />
                         </button>
@@ -787,7 +791,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                 Bu həftə: <strong>{lectureTotal} müh.</strong>, <strong>{seminarTotal} sem.</strong>
                             </p>
                         </div>
-                        <div className='flex flex-col items-end gap-[5px] print:hidden'>
+                        <div className='no-print flex flex-col items-end gap-[5px]'>
                             <div className='flex items-stretch overflow-hidden rounded-[6px] border border-[#434140] text-[13px]'>
                                 <button
                                     type='button'
@@ -845,7 +849,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                         </div>
                     </div>
 
-                    <div className='mb-[10px] flex gap-[6px] overflow-x-auto rounded-[8px] bg-[#FFF] p-[8px] shadow-sm lg:hidden print:hidden'>
+                    <div className='no-print mb-[10px] flex gap-[6px] overflow-x-auto rounded-[8px] bg-[#FFF] p-[8px] shadow-sm lg:hidden'>
                         {days.map((day) => (
                             <button
                                 key={day}
@@ -857,7 +861,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                             </button>
                         ))}
                     </div>
-                    <div className='flex flex-col gap-[8px] lg:hidden print:hidden'>
+                    <div className='no-print flex flex-col gap-[8px] lg:hidden'>
                         {mobileLessons.length === 0 ? (
                             <p className='rounded-[8px] bg-[#FFF] p-[12px] text-[13px] text-[#777] shadow-sm'>
                                 {mobileDay} günü dərs yoxdur.
@@ -870,6 +874,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                     lesson={lesson}
                                     sequenceIndex={sequenceIndex}
                                     onRequestTypeChange={requestTypeChange}
+                                    onEditSubject={setEditingSubject}
                                 />
                             ))
                         )}
@@ -880,12 +885,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                         <p className='text-[13px] text-[#434140]'>Həftəlik cədvəl</p>
                     </div>
                     <PrintSchedules subjects={subjects} weekState={weekState} />
-                    <div className='hidden print:block'>
-                        <p className='fixed bottom-0 left-0 z-10 text-[11px] text-[#777]' style={{ padding: '0 0 8mm 22mm' }}>
-                            {typeof window !== 'undefined' ? window.location.origin : ''}
-                        </p>
-                    </div>
-                    <div className='hidden overflow-x-auto rounded-[8px] bg-[#FFF] shadow-sm lg:block print:hidden'>
+                    <div className='no-print hidden overflow-x-auto rounded-[8px] bg-[#FFF] shadow-sm lg:block'>
                         <div className='min-w-[1050px]'>
                             <div className='grid grid-cols-[52px_repeat(7,minmax(130px,1fr))] border-b border-[#DDD]'>
                                 <div className='border-b border-[#DDD] p-[8px]' />
@@ -959,6 +959,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                                         lesson={lesson}
                                                         sequenceIndex={sequenceIndex}
                                                         onRequestTypeChange={requestTypeChange}
+                                                        onEditSubject={setEditingSubject}
                                                     />
                                                 </div>
                                                 )

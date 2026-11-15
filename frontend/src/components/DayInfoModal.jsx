@@ -1,3 +1,5 @@
+import { FiX } from 'react-icons/fi'
+
 const getStartTime = (lesson) => lesson.startTime || lesson.time
 
 const typeLabels = {
@@ -60,9 +62,9 @@ const DayInfoModal = ({ open, todayLessons, tomorrowLessons, tomorrowTitle, nowM
             type='button'
             onClick={onClose}
             aria-label='Bağla'
-            className='rounded-[4px] px-[4px] text-[24px] leading-none hover:bg-[#EEE]'
+            className='flex h-[32px] w-[32px] items-center justify-center rounded-[4px] text-[20px] leading-none text-[#434140] hover:bg-[#EEE]'
           >
-            ×
+            <FiX aria-hidden='true' />
           </button>
         </div>
         <div className='flex flex-1 flex-col gap-[14px] overflow-y-auto'>
