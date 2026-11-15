@@ -5,9 +5,11 @@ import NewSubjectModal from './NewSubjectModal'
 import { getSequenceIndex, resolveLessonType } from '../lib/subjects'
 import {
   addWeeks,
+  baseModeForWeek,
   defaultWeekState,
   getWeekNumber,
   normalizeWeekState,
+  parseDayKey,
   reanchorWeekState,
   resolveWeekType,
   withWeekOverride,
@@ -106,6 +108,135 @@ const layoutDayEvents = (events) => {
         flushCluster()
     }
     return positioned
+}
+
+// Cədvəl və mobil siyahı baxılan həftəyə, "Yaxınlıqdakılar" həmişə real həftəyə baxır.
+const lessonsIn = (list, dayName, weekNum) => (
+    list.flatMap((subject) => (
+        subject.schedule
+            .map((lesson, lessonIndex) => ({
+                subject,
+                lesson,
+                sequenceIndex: getSequenceIndex(subject, lessonIndex, weekNum),
+            }))
+            .filter(({ lesson }) => lesson.day === dayName)
+            .map(({ subject, lesson, sequenceIndex }) => ({
+                subject,
+                lesson,
+                sequenceIndex,
+                type: resolveLessonType(subject, sequenceIndex),
+            }))
+    )).sort((a, b) => toMinutes(getStartTime(a.lesson)) - toMinutes(getStartTime(b.lesson)))
+)
+
+// Çap üçün: yalnız dərs olan saatlar — boş sətirlər çap olunmur.
+const getContentHours = (allLessons) => {
+    if (allLessons.length === 0) {
+        return []
+    }
+    const minStart = Math.min(...allLessons.map((lesson) => toMinutes(getStartTime(lesson))))
+    const maxEnd = Math.max(...allLessons.map((lesson) => toMinutes(getEndTime(lesson))))
+    const from = Math.floor(minStart / 60)
+    const to = Math.floor((maxEnd - 1) / 60)
+    return Array.from({ length: Math.max(to - from + 1, 1) }, (_, index) => from + index)
+}
+
+const PrintSchedules = ({ subjects, weekState }) => {
+    const today = new Date()
+    const todayStr = today.toDateString()
+    const currentMonday = getMonday(today)
+    const anchorMonday = parseDayKey(weekState.anchorWeekStart) || currentMonday
+    const anchorMode = ['upper-week', 'lower-week'].includes(weekState.anchorMode) ? weekState.anchorMode : 'upper-week'
+
+    const weeks = ['upper-week', 'lower-week'].map((mode) => (
+        baseModeForWeek(anchorMonday, anchorMode, currentMonday) === mode
+            ? { mode, monday: currentMonday }
+            : { mode, monday: addWeeks(currentMonday, 1) }
+    ))
+
+    return (
+        <div className='hidden print:block'>
+            {weeks.map(({ mode, monday }) => {
+                const weekNumber = getWeekNumber(monday)
+                const active = subjects.filter((subject) => (
+                    subject.frequency === 'every-week' || subject.frequency === mode
+                ))
+                const byDay = days.map((name, index) => {
+                    const date = new Date(monday)
+                    date.setDate(monday.getDate() + index)
+                    return { name, date, lessons: lessonsIn(active, name, weekNumber) }
+                })
+                const contentHours = getContentHours(byDay.flatMap(({ lessons }) => lessons.map(({ lesson }) => lesson)))
+                return (
+                    <section key={mode} className='mb-[16px]'>
+                        <h2 className='mb-[8px] ml-[6mm] text-[16px] font-bold text-[#434140]'>
+                            {mode === 'upper-week' ? 'Üst həftə' : 'Alt həftə'}
+                        </h2>
+                        {contentHours.length === 0 ? (
+                            <p className='ml-[6mm] text-[13px] text-[#777]'>Bu həftə dərs yoxdur.</p>
+                        ) : (
+                            <div className='grid grid-cols-[52px_repeat(7,minmax(0,1fr))] border-b border-[#DDD]'>
+                                <div />
+                                {byDay.map(({ name }) => (
+                                    <div key={name} className='border-r border-[#DDD] p-[4px] text-center'>
+                                        <p className='text-[12px] text-[#666]'>{name}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {contentHours.length > 0 && (
+                            <div className='grid grid-cols-[52px_repeat(7,minmax(0,1fr))]'>
+                                <div className='relative' style={{ height: `${contentHours.length * HOUR_PX}px` }}>
+                                    {contentHours.map((hour) => (
+                                        <div
+                                            key={hour}
+                                            className='absolute right-[6px] text-right text-[11px] tabular-nums text-[#999]'
+                                            style={{ top: `${(hour - contentHours[0]) * HOUR_PX + 5}px` }}
+                                        >
+                                            {String(hour).padStart(2, '0')}:00
+                                        </div>
+                                    ))}
+                                </div>
+                                {byDay.map(({ name, date, lessons }) => (
+                                    <div
+                                        key={name}
+                                        className={`relative border-l border-[#DDD] ${date.toDateString() === todayStr ? 'bg-[#FCE5E0]/50' : ''}`}
+                                        style={{ height: `${contentHours.length * HOUR_PX}px` }}
+                                    >
+                                        {contentHours.map((hour) => (
+                                            <div
+                                                key={hour}
+                                                className='absolute left-0 right-0 border-t border-[#DDD]'
+                                                style={{ top: `${(hour - contentHours[0]) * HOUR_PX}px` }}
+                                            />
+                                        ))}
+                                        {layoutDayEvents(lessons).map(({ subject, lesson, sequenceIndex, lane, laneCount, start, end, type }) => (
+                                            <div
+                                                key={`${subject.id}-${sequenceIndex}`}
+                                                className='absolute'
+                                                style={{
+                                                    top: `${((start - contentHours[0] * 60) / 60) * HOUR_PX}px`,
+                                                    height: `${Math.max(((end - start) / 60) * HOUR_PX, 60)}px`,
+                                                    left: `calc(${(lane / laneCount) * 100}% + 3px)`,
+                                                    width: `calc(${100 / laneCount}% - 6px)`,
+                                                }}
+                                            >
+                                                <div className={`print-exact h-full overflow-hidden rounded-[5px] border-l-[4px] p-[7px] text-[13px] ${type === 'lecture' ? 'border-[#A65B46] bg-[#FCE5E0]' : 'border-[#477A68] bg-[#E3F1EC]'}`}>
+                                                    <p className='font-bold'>{getStartTime(lesson)} - {lesson.endTime || 'növbəti saat'}</p>
+                                                    <p className='truncate font-medium'>{subject.name}</p>
+                                                    <p className='text-[12px] font-medium text-[#666]'>{type === 'lecture' ? 'Mühazirə' : 'Seminar'}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                )
+            })}
+        </div>
+    )
 }
 
 const isOverridden = (subject, sequenceIndex) => (
@@ -544,25 +675,6 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
     const seminarTotal = occurrences.filter((occurrence) => occurrence.type === 'seminar').length
 
     const nowMinutes = today.getHours() * 60 + today.getMinutes()
-    // Cədvəl və mobil siyahı baxılan həftəyə, "Bugün/Növbəti" panelləri həmişə real həftəyə baxır.
-    const lessonsIn = (list, dayName, weekNum) => (
-        list.flatMap((subject) => (
-            subject.schedule
-                .map((lesson, lessonIndex) => ({
-                    subject,
-                    lesson,
-                    sequenceIndex: getSequenceIndex(subject, lessonIndex, weekNum),
-                }))
-                .filter(({ lesson }) => lesson.day === dayName)
-                .map(({ subject, lesson, sequenceIndex }) => ({
-                    subject,
-                    lesson,
-                    sequenceIndex,
-                    type: resolveLessonType(subject, sequenceIndex),
-                }))
-        )).sort((a, b) => toMinutes(getStartTime(a.lesson)) - toMinutes(getStartTime(b.lesson)))
-    )
-
     const todayLessons = lessonsIn(currentActiveSubjects, days[todayIndex], currentWeekNumber)
 
     // Sabah: həftə dəyişirsə (bazar → bazar ertəsi) növbəti həftənin tipi ilə.
@@ -763,15 +875,19 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                         )}
                     </div>
 
-                    <div className='mb-[10px] hidden print:block'>
+                    <div className='mb-[10px] ml-[6mm] hidden print:block'>
                         <p className='print-exact font-["Trirong"] text-[20px] font-bold text-[#A65B46]'>AcademicSchedule</p>
-                        <p className='text-[13px] text-[#434140]'>
-                            Həftəlik cədvəl • {viewedWeekType.mode === 'upper-week' ? 'Üst həftə' : 'Alt həftə'}
+                        <p className='text-[13px] text-[#434140]'>Həftəlik cədvəl</p>
+                    </div>
+                    <PrintSchedules subjects={subjects} weekState={weekState} />
+                    <div className='hidden print:block'>
+                        <p className='fixed bottom-0 left-0 z-10 text-[11px] text-[#777]' style={{ padding: '0 0 8mm 22mm' }}>
+                            {typeof window !== 'undefined' ? window.location.origin : ''}
                         </p>
                     </div>
-                    <div className='hidden overflow-x-auto rounded-[8px] bg-[#FFF] shadow-sm lg:block print:block print:overflow-hidden print:shadow-none'>
-                        <div className='min-w-[1050px] print:min-w-0 print:w-full'>
-                            <div className='grid grid-cols-[65px_repeat(7,minmax(130px,1fr))] border-b border-[#DDD]'>
+                    <div className='hidden overflow-x-auto rounded-[8px] bg-[#FFF] shadow-sm lg:block print:hidden'>
+                        <div className='min-w-[1050px]'>
+                            <div className='grid grid-cols-[52px_repeat(7,minmax(130px,1fr))] border-b border-[#DDD]'>
                                 <div className='border-b border-[#DDD] p-[8px]' />
                                 {weekDays.map(({ name, date }) => (
                                     <div key={name} className={`border-r border-[#DDD] p-[8px] text-center ${date.toDateString() === today.toDateString() ? 'bg-[#FCE5E0]' : ''}`}>
@@ -781,7 +897,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                 ))}
                             </div>
 
-                            <div className='grid grid-cols-[65px_repeat(7,minmax(130px,1fr))] border-b border-[#DDD]'>
+                            <div className='grid grid-cols-[52px_repeat(7,minmax(130px,1fr))] border-b border-[#DDD]'>
                                 <div>
                                     {hours.map((hour) => (
                                         <div
