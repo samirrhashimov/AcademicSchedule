@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { FiPlus, FiPrinter, FiSearch, FiSettings } from 'react-icons/fi'
+import { FiCalendar, FiPlus, FiPrinter, FiSearch, FiSettings } from 'react-icons/fi'
 import NewSubjectModal from './NewSubjectModal'
 import SearchModal from './SearchModal'
 import SettingsModal from './SettingsModal'
 
-const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, weekSystem, onWeekSystemChange }) => {
+const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, weekSystem, weekState, onWeekSystemChange, onOpenDayInfo }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -33,6 +33,15 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
             className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiSearch aria-hidden='true' />
+          </button>
+          <button
+            type='button'
+            onClick={onOpenDayInfo}
+            aria-label='Yaxınlıqdakılar'
+            title='Yaxınlıqdakılar'
+            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+          >
+            <FiCalendar aria-hidden='true' />
           </button>
           <button
             type='button'
@@ -70,6 +79,8 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
           theme={theme}
           onSelectTheme={onSelectTheme}
           weekSystem={weekSystem}
+          weekState={weekState}
+          subjects={subjects}
           onWeekSystemChange={onWeekSystemChange}
           onClose={() => setIsSettingsOpen(false)}
         />

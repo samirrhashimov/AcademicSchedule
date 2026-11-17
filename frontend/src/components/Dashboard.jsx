@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiBookOpen, FiCalendar, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiClock, FiCopy, FiEdit2, FiMapPin, FiPlus, FiTrash2, FiUser, FiX } from 'react-icons/fi'
+import { FiBookOpen, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiClock, FiCopy, FiEdit2, FiMapPin, FiPlus, FiTrash2, FiUser, FiX } from 'react-icons/fi'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 import DayInfoModal from './DayInfoModal'
@@ -289,7 +289,7 @@ const SubjectMenu = ({ subjects, onRequestRemoveSubject, onEditSubject, onDuplic
         <div className='mb-[12px] flex items-center justify-between gap-[8px]'>
             <span className='flex items-center gap-[8px]'>
                 <span className='text-[17px] font-bold'>Fənlərim</span>
-                <span className='min-w-[26px] rounded-full bg-[#A65B46] px-[8px] py-[2px] text-center text-[12px] font-bold tabular-nums text-[#FFF] ring-1 ring-[#FFF]/25'>{subjects.length}</span>
+                <span className='min-w-[26px] rounded-full bg-[#E7D8C6] px-[8px] py-[3px] text-center text-[12px] font-bold tabular-nums text-[#434140]'>{subjects.length}</span>
             </span>
             <span className='flex items-center gap-[4px]'>
                 <button
@@ -598,7 +598,7 @@ const DeleteConfirmDialog = ({ subject, onConfirm, onCancel }) => {
     )
 }
 
-const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, onApplyLessonType, jump, weekState, onWeekStateChange }) => {
+const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, onApplyLessonType, jump, weekState, onWeekStateChange, isDayInfoOpen, onDayInfoOpenChange }) => {
     const today = new Date()
     const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate())
     const currentWeekStart = getMonday(today)
@@ -609,7 +609,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
     const [pendingWeekChange, setPendingWeekChange] = useState(null)
     const [pendingDeleteSubject, setPendingDeleteSubject] = useState(null)
     const [copyingSubject, setCopyingSubject] = useState(null)
-    const [isDayInfoOpen, setIsDayInfoOpen] = useState(false)
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false)
     const [pendingSlot, setPendingSlot] = useState(null)
     const [hoverSlot, setHoverSlot] = useState(null)
     const [highlight, setHighlight] = useState(null)
@@ -853,15 +853,6 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                             <div className='flex items-stretch overflow-hidden rounded-[6px] border border-[#434140] text-[13px] dark:border-[#55504A]'>
                                 <button
                                     type='button'
-                                    onClick={() => setIsDayInfoOpen(true)}
-                                    aria-label='Yaxınlıqdakılar'
-                                    title='Yaxınlıqdakılar'
-                                    className='flex items-center border-r border-[#DDD] px-[10px] py-[5px] text-[15px] text-[#434140] hover:bg-[#EEE] dark:border-[#4A4440] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
-                                >
-                                    <FiCalendar aria-hidden='true' />
-                                </button>
-                                <button
-                                    type='button'
                                     onClick={() => goToWeek(addWeeks(viewedWeekStart, -1))}
                                     aria-label='Əvvəlki həftə'
                                     title='Əvvəlki həftə'
@@ -1087,8 +1078,19 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                 tomorrowLessons={tomorrowLessons}
                 tomorrowTitle={`Sabah (${tomorrowDayName})`}
                 nowMinutes={nowMinutes}
-                onClose={() => setIsDayInfoOpen(false)}
+                onClose={() => onDayInfoOpenChange(false)}
             />
+
+            {isAddModalOpen && (
+                <NewSubjectModal
+                    weekSystem={weekSystem}
+                    onClose={() => setIsAddModalOpen(false)}
+                    onSubmit={(created) => {
+                        onAddSubject(created)
+                        setIsAddModalOpen(false)
+                    }}
+                />
+            )}
 
             {editingSubject && (
                 <NewSubjectModal

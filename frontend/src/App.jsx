@@ -84,6 +84,7 @@ function ScheduleApp() {
   const [subjects, setSubjects] = useState([])
   const [jump, setJump] = useState(null)
   const [theme, setTheme] = useState(getInitialTheme)
+  const [isDayInfoOpen, setIsDayInfoOpen] = useState(false)
   const [weekState, setWeekState] = useState(() => {
     const monday = mondayOfWeek(new Date())
     return defaultWeekState(monday, getWeekNumber(monday) % 2 === 0 ? 'upper-week' : 'lower-week')
@@ -291,7 +292,9 @@ function ScheduleApp() {
         theme={theme}
         onSelectTheme={setTheme}
         weekSystem={weekState.system}
+        weekState={weekState}
         onWeekSystemChange={(system) => handleWeekStateChange((current) => ({ ...current, system }))}
+        onOpenDayInfo={() => setIsDayInfoOpen(true)}
       />
       <Dashboard
         subjects={subjects}
@@ -302,6 +305,8 @@ function ScheduleApp() {
         jump={jump}
         weekState={weekState}
         onWeekStateChange={handleWeekStateChange}
+        isDayInfoOpen={isDayInfoOpen}
+        onDayInfoOpenChange={setIsDayInfoOpen}
       />
     </div>
   )
