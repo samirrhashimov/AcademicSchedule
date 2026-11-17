@@ -7,11 +7,29 @@ import { createTemplate } from '../lib/api'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 
+const TTL_KEY = 'academic-schedule-template-ttl'
+const TTL_OPTIONS = [
+  { value: 7, label: '7 gün' },
+  { value: 30, label: '30 gün' },
+  { value: 90, label: '90 gün' },
+  { value: 0, label: 'Həmişəlik' },
+]
+
+const readTtl = () => {
+  try {
+    const saved = Number(localStorage.getItem(TTL_KEY))
+    return TTL_OPTIONS.some((option) => option.value === saved) ? saved : 30
+  } catch {
+    return 30
+  }
+}
+
 const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subjects, onWeekSystemChange, onClose }) => {
   const navigate = useNavigate()
   const [shareState, setShareState] = useState(null)
   const [shareBusy, setShareBusy] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [ttlDays, setTtlDays] = useState(readTtl)
   useLockBodyScroll(open)
   useEscapeKey(onClose, open)
   if (!open) {
@@ -25,6 +43,15 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
     navigate('/login', { replace: true })
   }
 
+  const handleTtlChange = (value) => {
+    setTtlDays(value)
+    try {
+      localStorage.setItem(TTL_KEY, String(value))
+    } catch {
+      // yaddaş əlçatan deyilsə sessiya ilə qalır
+    }
+  }
+
   const handleShare = async () => {
     if (shareBusy || subjects.length === 0) {
       return
@@ -33,7 +60,7 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
     setShareState(null)
     setCopied(false)
     try {
-      const template = await createTemplate({ subjects })
+      const template = await createTemplate({ subjects, expiresInDays: ttlDays })
       setShareState({ ok: true, code: template.code })
     } catch (error) {
       setShareState({ ok: false, message: error.message || 'Paylaşma alınmadı.' })
@@ -137,6 +164,23 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
             >
               {shareBusy ? 'Gözlə…' : 'Paylaş'}
             </button>
+          </div>
+          <div className='mt-[10px] flex items-center justify-between gap-[12px]'>
+            <p className='truncate text-[12px] text-[#777] dark:text-[#A8A29E]'>Saxlama müddəti</p>
+            <div className='flex shrink-0 overflow-hidden rounded-[6px] border border-[#D8D5CE] text-[12px] dark:border-[#4A4440]' role='group' aria-label='Şablon saxlama müddəti'>
+              {TTL_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type='button'
+                  onClick={() => handleTtlChange(option.value)}
+                  aria-pressed={ttlDays === option.value}
+                  title='Şablon nə qədər saxlanılsın'
+                  className={`px-[8px] py-[6px] font-medium ${ttlDays === option.value ? 'bg-[#A65B46] font-bold text-[#FFF]' : 'bg-[#FFF] text-[#434140] hover:bg-[#F7F3EC] dark:bg-[#2A2724] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'}`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
           {shareState?.ok && (
             <button

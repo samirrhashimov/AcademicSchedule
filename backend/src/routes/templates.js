@@ -50,6 +50,10 @@ router.post('/', async (req, res, next) => {
       }
     }
     const name = String(req.body?.name || '').trim().slice(0, 80) || 'Paylaşılan cədvəl'
+    const rawTtl = req.body?.expiresInDays
+    const expiresAt = (rawTtl === 0 || rawTtl === null)
+      ? undefined
+      : new Date(Date.now() + Math.min(Math.max(Math.floor(Number(rawTtl) || 30), 1), 365) * 86400000)
     for (let attempt = 0; attempt < 5; attempt += 1) {
       try {
         const template = await Template.create({
@@ -57,8 +61,9 @@ router.post('/', async (req, res, next) => {
           name,
           subjects: cleaned,
           createdBy: req.userId,
+          expiresAt,
         })
-        return res.status(201).json({ code: template.code, name: template.name })
+        return res.status(201).json({ code: template.code, name: template.name, expiresAt: template.expiresAt || null })
       } catch (error) {
         if (error?.code !== 11000) {
           throw error
