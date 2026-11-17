@@ -1043,11 +1043,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                             </div>
                         </div>
                     </div>
-                    {subjects.length === 0 && (
-                        <div className='mt-[15px] rounded-[8px] border border-dashed border-[#A65B46] p-[20px] text-center text-[#555] dark:text-[#C9C2B8]'>
-                            Başlamaq üçün “+ Yeni Fənn” düyməsinə kliklə.
-                        </div>
-                    )}
+
                 </main>
             </div>
 
