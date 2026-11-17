@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FiCheck, FiDownload, FiX } from 'react-icons/fi'
+import { FiCheck, FiClock, FiCopy, FiDownload, FiLogOut, FiMoon, FiShare2, FiSun, FiX } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { buildBackup, downloadBackup } from '../lib/backup'
 import { clearSession, getUser } from '../lib/auth'
@@ -9,6 +9,7 @@ import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 
 const TTL_KEY = 'academic-schedule-template-ttl'
 const TTL_OPTIONS = [
+  { value: 3, label: '3 gün' },
   { value: 7, label: '7 gün' },
   { value: 30, label: '30 gün' },
   { value: 90, label: '90 gün' },
@@ -18,9 +19,9 @@ const TTL_OPTIONS = [
 const readTtl = () => {
   try {
     const saved = Number(localStorage.getItem(TTL_KEY))
-    return TTL_OPTIONS.some((option) => option.value === saved) ? saved : 30
+    return TTL_OPTIONS.some((option) => option.value === saved) ? saved : 7
   } catch {
-    return 30
+    return 7
   }
 }
 
@@ -104,16 +105,17 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
         <p className='mb-[10px] text-[14px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Görünüş</p>
         <div className='mb-[16px] flex overflow-hidden rounded-[8px] border border-[#D8D5CE] text-[14px] dark:border-[#4A4440]' role='group' aria-label='Rəng rejimi'>
           {[
-            { value: 'light', label: 'Açıq' },
-            { value: 'dark', label: 'Tünd' },
+            { value: 'light', label: 'Açıq', icon: FiSun },
+            { value: 'dark', label: 'Tünd', icon: FiMoon },
           ].map((option) => (
             <button
               key={option.value}
               type='button'
               onClick={() => onSelectTheme(option.value)}
               aria-pressed={theme === option.value}
-              className={`flex-1 px-[10px] py-[10px] font-medium ${theme === option.value ? 'bg-[#A65B46] font-bold text-[#FFF]' : 'bg-[#FFF] text-[#434140] hover:bg-[#F7F3EC] dark:bg-[#2A2724] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'}`}
+              className={`flex flex-1 items-center justify-center gap-[6px] px-[10px] py-[10px] font-medium ${theme === option.value ? 'bg-[#A65B46] font-bold text-[#FFF]' : 'bg-[#FFF] text-[#434140] hover:bg-[#F7F3EC] dark:bg-[#2A2724] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'}`}
             >
+              <option.icon aria-hidden='true' />
               {option.label}
             </button>
           ))}
@@ -121,16 +123,17 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
         <p className='mb-[10px] text-[14px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Həftə sistemi</p>
         <div className='mb-[16px] flex overflow-hidden rounded-[8px] border border-[#D8D5CE] text-[14px] dark:border-[#4A4440]' role='group' aria-label='Həftə sistemi'>
           {[
-            { value: 'single', label: 'Tək həftə' },
-            { value: 'double', label: 'Cüt həftə' },
+            { value: 'single', label: 'Tək həftə', numeral: 'I' },
+            { value: 'double', label: 'Cüt həftə', numeral: 'II' },
           ].map((option) => (
             <button
               key={option.value}
               type='button'
               onClick={() => onWeekSystemChange(option.value)}
               aria-pressed={weekSystem === option.value}
-              className={`flex-1 px-[10px] py-[10px] font-medium ${weekSystem === option.value ? 'bg-[#A65B46] font-bold text-[#FFF]' : 'bg-[#FFF] text-[#434140] hover:bg-[#F7F3EC] dark:bg-[#2A2724] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'}`}
+              className={`flex flex-1 items-center justify-center gap-[6px] px-[10px] py-[10px] font-medium ${weekSystem === option.value ? 'bg-[#A65B46] font-bold text-[#FFF]' : 'bg-[#FFF] text-[#434140] hover:bg-[#F7F3EC] dark:bg-[#2A2724] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'}`}
             >
+              <span aria-hidden='true' className='font-bold'>{option.numeral} -</span>
               {option.label}
             </button>
           ))}
@@ -144,7 +147,7 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
           <button
             type='button'
             onClick={() => downloadBackup(buildBackup(subjects, weekState))}
-            className='flex shrink-0 items-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
+            className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
           >
             <FiDownload aria-hidden='true' />
             Export
@@ -154,33 +157,35 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
           <div className='flex items-center justify-between gap-[12px]'>
             <div className='min-w-0'>
               <p className='truncate text-[14px] font-medium'>Şablon kimi paylaş</p>
-              <p className='truncate text-[12px] text-[#777] dark:text-[#A8A29E]'>Kodla başqaları yükləsin</p>
             </div>
             <button
               type='button'
               onClick={handleShare}
               disabled={shareBusy || subjects.length === 0}
-              className='shrink-0 rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] disabled:opacity-60 dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
+              className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] disabled:opacity-60 dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
             >
+              <FiShare2 aria-hidden='true' />
               {shareBusy ? 'Gözlə…' : 'Paylaş'}
             </button>
           </div>
           <div className='mt-[10px] flex items-center justify-between gap-[12px]'>
-            <p className='truncate text-[12px] text-[#777] dark:text-[#A8A29E]'>Saxlama müddəti</p>
-            <div className='flex shrink-0 overflow-hidden rounded-[6px] border border-[#D8D5CE] text-[12px] dark:border-[#4A4440]' role='group' aria-label='Şablon saxlama müddəti'>
+            <label htmlFor='template-ttl' className='flex items-center gap-[4px] truncate text-[12px] text-[#777] dark:text-[#A8A29E]'>
+              <FiClock aria-hidden='true' />
+              Saxlama müddəti
+            </label>
+            <select
+              id='template-ttl'
+              value={ttlDays}
+              onChange={(event) => handleTtlChange(Number(event.target.value))}
+              title='Şablon nə qədər saxlanılsın'
+              className='min-w-[96px] shrink-0 rounded-[6px] border border-[#D8D5CE] bg-[#FFF] px-[8px] py-[6px] text-center text-[12px] font-medium text-[#434140] hover:bg-[#F7F3EC] dark:border-[#4A4440] dark:bg-[#2A2724] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'
+            >
               {TTL_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type='button'
-                  onClick={() => handleTtlChange(option.value)}
-                  aria-pressed={ttlDays === option.value}
-                  title='Şablon nə qədər saxlanılsın'
-                  className={`px-[8px] py-[6px] font-medium ${ttlDays === option.value ? 'bg-[#A65B46] font-bold text-[#FFF]' : 'bg-[#FFF] text-[#434140] hover:bg-[#F7F3EC] dark:bg-[#2A2724] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'}`}
-                >
+                <option key={option.value} value={option.value}>
                   {option.label}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
           </div>
           {shareState?.ok && (
             <button
@@ -190,7 +195,7 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
               className='mt-[10px] flex w-full items-center justify-between rounded-[6px] bg-[#E3F1EC] px-[12px] py-[8px] text-[16px] font-bold tracking-[0.2em] text-[#477A68]'
             >
               {shareState.code}
-              {copied ? <FiCheck aria-hidden='true' /> : <span className='text-[12px] font-medium'>Kopyala</span>}
+              {copied ? <FiCheck aria-hidden='true' /> : <FiCopy aria-hidden='true' />}
             </button>
           )}
           {shareState && !shareState.ok && (
@@ -206,8 +211,9 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
           <button
             type='button'
             onClick={handleLogout}
-            className='shrink-0 rounded-[6px] bg-[#FCE5E0] px-[12px] py-[8px] text-[13px] font-medium text-[#A65B46] hover:bg-[#F6D9D2]'
+            className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#FCE5E0] px-[12px] py-[8px] text-[13px] font-medium text-[#A65B46] hover:bg-[#F6D9D2]'
           >
+            <FiLogOut aria-hidden='true' />
             Çıxış
           </button>
         </div>
