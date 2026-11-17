@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FiPrinter, FiSearch, FiSettings } from 'react-icons/fi'
+import { FiPlus, FiPrinter, FiSearch, FiSettings } from 'react-icons/fi'
 import NewSubjectModal from './NewSubjectModal'
 import SearchModal from './SearchModal'
 import SettingsModal from './SettingsModal'
@@ -16,6 +16,15 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
           <p className='font-bold font-["Trirong"] text-[20px] text-[#A65B46]'>AcademicSchedule</p>
         </div>
         <div className='flex flex-wrap items-center gap-[10px]'>
+          <button
+            type='button'
+            onClick={() => setIsModalOpen(true)}
+            aria-label='Yeni fənn'
+            title='Yeni fənn'
+            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+          >
+            <FiPlus aria-hidden='true' />
+          </button>
           <button
             type='button'
             onClick={() => setIsSearchOpen(true)}
@@ -42,13 +51,6 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
             className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiSettings aria-hidden='true' />
-          </button>
-          <button
-            type='button'
-            onClick={() => setIsModalOpen(true)}
-            className='font-[Inter] rounded-[5px] bg-[#434140] px-[10px] py-[5px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
-          >
-            + Yeni Fənn
           </button>
         </div>
       </div>

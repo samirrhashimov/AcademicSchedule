@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiBookOpen, FiCalendar, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiClock, FiCopy, FiEdit2, FiMapPin, FiTrash2, FiUser, FiX } from 'react-icons/fi'
+import { FiBookOpen, FiCalendar, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiClock, FiCopy, FiEdit2, FiMapPin, FiPlus, FiTrash2, FiUser, FiX } from 'react-icons/fi'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 import DayInfoModal from './DayInfoModal'
@@ -284,22 +284,33 @@ const findConflicts = (activeSubjects) => {
     return conflicts
 }
 
-const SubjectMenu = ({ subjects, onRequestRemoveSubject, onEditSubject, onDuplicateSubject, onHideSidebar }) => (
+const SubjectMenu = ({ subjects, onRequestRemoveSubject, onEditSubject, onDuplicateSubject, onHideSidebar, onAddSubject }) => (
     <aside className='w-full rounded-[12px] bg-[#434140] p-[16px] text-[#FFF] lg:w-[250px]'>
         <div className='mb-[12px] flex items-center justify-between gap-[8px]'>
             <span className='flex items-center gap-[8px]'>
                 <span className='text-[17px] font-bold'>Fənlərim</span>
-                <span className='rounded-full bg-[#A65B46] px-[8px] py-[2px] text-[12px] font-medium'>{subjects.length}</span>
+                <span className='min-w-[26px] rounded-full bg-[#A65B46] px-[8px] py-[2px] text-center text-[12px] font-bold tabular-nums text-[#FFF] ring-1 ring-[#FFF]/25'>{subjects.length}</span>
             </span>
-            <button
-                type='button'
-                onClick={onHideSidebar}
-                aria-label='Paneli gizlət'
-                title='Paneli gizlət'
-                className='rounded-full p-[6px] text-[18px] leading-none text-[#E7D8C6] hover:bg-[#555250]'
-            >
-                <FiChevronsLeft aria-hidden='true' />
-            </button>
+            <span className='flex items-center gap-[4px]'>
+                <button
+                    type='button'
+                    onClick={onAddSubject}
+                    aria-label='Yeni fənn'
+                    title='Yeni fənn'
+                    className='rounded-full p-[6px] text-[18px] leading-none text-[#E7D8C6] hover:bg-[#555250]'
+                >
+                    <FiPlus aria-hidden='true' />
+                </button>
+                <button
+                    type='button'
+                    onClick={onHideSidebar}
+                    aria-label='Paneli gizlət'
+                    title='Paneli gizlət'
+                    className='rounded-full p-[6px] text-[18px] leading-none text-[#E7D8C6] hover:bg-[#555250]'
+                >
+                    <FiChevronsLeft aria-hidden='true' />
+                </button>
+            </span>
         </div>
         {subjects.length === 0 ? (
             <div className='rounded-[8px] border border-dashed border-[#6B6862] p-[16px] text-center text-[13px] text-[#DDD]'>
@@ -816,6 +827,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                             name: `${subject.name} (nüsxə)`,
                         })}
                         onHideSidebar={toggleSidebar}
+                        onAddSubject={() => setIsAddModalOpen(true)}
                     />
                 </div>
                 <main className='min-w-0 flex-1'>
