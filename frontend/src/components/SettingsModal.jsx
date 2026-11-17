@@ -1,12 +1,17 @@
-import { FiDownload, FiX } from 'react-icons/fi'
+import { useState } from 'react'
+import { FiCheck, FiDownload, FiX } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { buildBackup, downloadBackup } from '../lib/backup'
 import { clearSession, getUser } from '../lib/auth'
+import { createTemplate } from '../lib/api'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 
 const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subjects, onWeekSystemChange, onClose }) => {
   const navigate = useNavigate()
+  const [shareState, setShareState] = useState(null)
+  const [shareBusy, setShareBusy] = useState(false)
+  const [copied, setCopied] = useState(false)
   useLockBodyScroll(open)
   useEscapeKey(onClose, open)
   if (!open) {
@@ -18,6 +23,36 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
     clearSession()
     onClose()
     navigate('/login', { replace: true })
+  }
+
+  const handleShare = async () => {
+    if (shareBusy || subjects.length === 0) {
+      return
+    }
+    setShareBusy(true)
+    setShareState(null)
+    setCopied(false)
+    try {
+      const template = await createTemplate({ subjects })
+      setShareState({ ok: true, code: template.code })
+    } catch (error) {
+      setShareState({ ok: false, message: error.message || 'Paylaşma alınmadı.' })
+    } finally {
+      setShareBusy(false)
+    }
+  }
+
+  const handleCopyCode = async () => {
+    if (!shareState?.code) {
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(shareState.code)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
   }
 
   return (
@@ -74,7 +109,7 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
           ))}
         </div>
         <p className='mb-[10px] text-[14px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Məlumat</p>
-        <div className='mb-[16px] flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
+        <div className='mb-[10px] flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
           <div className='min-w-0'>
             <p className='truncate text-[14px] font-medium'>Yedəkləmə</p>
             <p className='truncate text-[12px] text-[#777] dark:text-[#A8A29E]'>{subjects.length} fənn</p>
@@ -87,6 +122,36 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
             <FiDownload aria-hidden='true' />
             Export
           </button>
+        </div>
+        <div className='mb-[16px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
+          <div className='flex items-center justify-between gap-[12px]'>
+            <div className='min-w-0'>
+              <p className='truncate text-[14px] font-medium'>Şablon kimi paylaş</p>
+              <p className='truncate text-[12px] text-[#777] dark:text-[#A8A29E]'>Kodla başqaları yükləsin</p>
+            </div>
+            <button
+              type='button'
+              onClick={handleShare}
+              disabled={shareBusy || subjects.length === 0}
+              className='shrink-0 rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] disabled:opacity-60 dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
+            >
+              {shareBusy ? 'Gözlə…' : 'Paylaş'}
+            </button>
+          </div>
+          {shareState?.ok && (
+            <button
+              type='button'
+              onClick={handleCopyCode}
+              title='Kopyalamaq üçün kliklə'
+              className='mt-[10px] flex w-full items-center justify-between rounded-[6px] bg-[#E3F1EC] px-[12px] py-[8px] text-[16px] font-bold tracking-[0.2em] text-[#477A68]'
+            >
+              {shareState.code}
+              {copied ? <FiCheck aria-hidden='true' /> : <span className='text-[12px] font-medium'>Kopyala</span>}
+            </button>
+          )}
+          {shareState && !shareState.ok && (
+            <p className='mt-[10px] rounded-[6px] bg-[#FCE5E0] p-[8px] text-[13px] text-[#A65B46]'>{shareState.message}</p>
+          )}
         </div>
         <p className='mb-[10px] text-[14px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Hesab</p>
         <div className='flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>

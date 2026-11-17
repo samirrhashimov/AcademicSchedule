@@ -4,6 +4,7 @@ import express from 'express'
 import { connectDb } from './db.js'
 import authRouter from './routes/auth.js'
 import subjectsRouter from './routes/subjects.js'
+import templatesRouter from './routes/templates.js'
 import weekStateRouter from './routes/weekState.js'
 
 if (!process.env.JWT_SECRET) {
@@ -23,6 +24,7 @@ app.get('/api/health', (req, res) => {
 })
 app.use('/api/auth', authRouter)
 app.use('/api/subjects', subjectsRouter)
+app.use('/api/templates', templatesRouter)
 app.use('/api/week-state', weekStateRouter)
 
 // eslint-disable-next-line no-unused-vars

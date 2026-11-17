@@ -42,6 +42,13 @@ export const login = (payload) => request('/api/auth/login', {
   body: JSON.stringify(payload),
 })
 
+export const fetchTemplate = (code) => request(`/api/templates/${encodeURIComponent(code)}`)
+
+export const createTemplate = (payload) => request('/api/templates', {
+  method: 'POST',
+  body: JSON.stringify(payload),
+})
+
 export const fetchSubjects = () => request('/api/subjects')
 
 export const createSubject = (subject) => request('/api/subjects', {

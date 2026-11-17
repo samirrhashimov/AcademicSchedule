@@ -20,6 +20,8 @@ API: `http://localhost:5000/api/health`
 - `POST /api/auth/login` — `{ email, password }` → `{ token, user }`
 - `GET/POST /api/subjects`, `PUT/DELETE /api/subjects/:id` (JWT lazımdır)
 - `GET/PUT /api/week-state` (JWT lazımdır)
+- `POST /api/templates` — `{ name?, subjects }` → `{ code, name }` (JWT lazımdır)
+- `GET /api/templates/:code` — şablonu kodla yükləyir (JWT lazımdır)
 
 Qorunan sorğular `Authorization: Bearer <token>` başlığı istəyir.
 

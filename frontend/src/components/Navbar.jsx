@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { FiCalendar, FiPlus, FiPrinter, FiSearch, FiSettings } from 'react-icons/fi'
+import AddModal from './AddModal'
 import NewSubjectModal from './NewSubjectModal'
 import SearchModal from './SearchModal'
 import SettingsModal from './SettingsModal'
@@ -8,6 +9,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false)
 
   return (
     <div className='no-print'>
@@ -18,9 +20,9 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
         <div className='flex flex-wrap items-center gap-[10px]'>
           <button
             type='button'
-            onClick={() => setIsModalOpen(true)}
-            aria-label='Yeni fənn'
-            title='Yeni fənn'
+            onClick={() => setIsAddMenuOpen(true)}
+            aria-label='Əlavə et'
+            title='Əlavə et'
             className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiPlus aria-hidden='true' />
@@ -85,6 +87,15 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
           onClose={() => setIsSettingsOpen(false)}
         />
       )}
+
+      <AddModal
+        open={isAddMenuOpen}
+        onClose={() => setIsAddMenuOpen(false)}
+        onSelectNew={() => {
+          setIsAddMenuOpen(false)
+          setIsModalOpen(true)
+        }}
+      />
 
       {isModalOpen && (
         <NewSubjectModal
