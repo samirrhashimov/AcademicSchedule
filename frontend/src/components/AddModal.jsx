@@ -112,6 +112,18 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
     menuRefs.current[next]?.focus()
   }
 
+  const handleCardKeyDown = (event) => {
+    if (step !== 'menu' || event.metaKey || event.ctrlKey || event.altKey) {
+      return
+    }
+    const index = ['1', '2', '3'].indexOf(event.key)
+    if (index === -1) {
+      return
+    }
+    event.preventDefault()
+    menuRefs.current[index]?.click()
+  }
+
   const handleConfirmLoad = async () => {
     if (!preview || busy) {
       return
@@ -138,7 +150,7 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
       aria-modal='true'
       aria-labelledby='add-title'
     >
-      <div className='modal-card-in h-full w-full max-w-none overflow-y-auto rounded-none bg-[#FFF] p-[24px] text-[#333] shadow-xl sm:h-auto sm:max-w-[600px] sm:rounded-[14px] dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
+      <div onKeyDown={handleCardKeyDown} className='modal-card-in h-full w-full max-w-none overflow-y-auto rounded-none bg-[#FFF] p-[24px] text-[#333] shadow-xl sm:h-auto sm:max-w-[600px] sm:rounded-[14px] dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
         <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px] dark:border-[#4A4440]'>
           <h2 id='add-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>
             {step === 'code' ? 'Şablon kodu' : 'Əlavə et'}
@@ -159,8 +171,10 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
               ref={(element) => { menuRefs.current[0] = element }}
               onFocus={() => setMenuIndex(0)}
               onClick={onSelectNew}
-              className='flex min-h-[230px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[#D8D5CE] bg-[#FAFAF8] px-[20px] py-[28px] text-center hover:border-[#A65B46] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B]'
+              title='Yeni fənn (1)'
+              className='relative flex min-h-[230px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[#D8D5CE] bg-[#FAFAF8] px-[20px] py-[28px] text-center hover:border-[#A65B46] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B]'
             >
+              <span aria-hidden='true' className='absolute right-[10px] top-[10px] rounded-[4px] bg-[#EEE] px-[6px] py-[2px] text-[11px] font-bold text-[#777] dark:bg-[#3A3632] dark:text-[#A8A29E]'>1</span>
               <FiPlus aria-hidden='true' className='mb-[10px] text-[72px] text-[#434140] dark:text-[#E7D8C6]' />
               <span className='text-[15px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Yeni fənn</span>
               <span className='text-[12px] text-[#777] dark:text-[#A8A29E]'>Fənni əl ilə daxil et</span>
@@ -170,8 +184,10 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
               ref={(element) => { menuRefs.current[1] = element }}
               onFocus={() => setMenuIndex(1)}
               onClick={() => fileInputRef.current?.click()}
-              className='flex min-h-[230px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[#D8D5CE] bg-[#FAFAF8] px-[20px] py-[28px] text-center hover:border-[#A65B46] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B]'
+              title='İdxal et (2)'
+              className='relative flex min-h-[230px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[#D8D5CE] bg-[#FAFAF8] px-[20px] py-[28px] text-center hover:border-[#A65B46] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B]'
             >
+              <span aria-hidden='true' className='absolute right-[10px] top-[10px] rounded-[4px] bg-[#EEE] px-[6px] py-[2px] text-[11px] font-bold text-[#777] dark:bg-[#3A3632] dark:text-[#A8A29E]'>2</span>
               <FiUpload aria-hidden='true' className='mb-[10px] text-[72px] text-[#434140] dark:text-[#E7D8C6]' />
               <span className='text-[15px] font-bold text-[#434140] dark:text-[#EDE8DF]'>İdxal et</span>
               <span className='text-[12px] text-[#777] dark:text-[#A8A29E]'>JSON faylından daxil et</span>
@@ -182,8 +198,10 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
               onFocus={() => setMenuIndex(2)}
               onClick={() => setStep('code')}
               aria-label='Şablon kodu ilə yüklə'
-              className='flex min-h-[230px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[#D8D5CE] bg-[#FAFAF8] px-[20px] py-[28px] text-center hover:border-[#A65B46] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B]'
+              title='Şablon kodu (3)'
+              className='relative flex min-h-[230px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[#D8D5CE] bg-[#FAFAF8] px-[20px] py-[28px] text-center hover:border-[#A65B46] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B]'
             >
+              <span aria-hidden='true' className='absolute right-[10px] top-[10px] rounded-[4px] bg-[#EEE] px-[6px] py-[2px] text-[11px] font-bold text-[#777] dark:bg-[#3A3632] dark:text-[#A8A29E]'>3</span>
               <FiLayers aria-hidden='true' className='mb-[10px] text-[72px] text-[#434140] dark:text-[#E7D8C6]' />
               <span className='text-[15px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Şablon kodu</span>
               <span className='text-[12px] text-[#777] dark:text-[#A8A29E]'>Kodu yaz, hazır cədvəli yüklə</span>

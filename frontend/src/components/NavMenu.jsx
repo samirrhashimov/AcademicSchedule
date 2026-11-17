@@ -18,7 +18,12 @@ const NavMenu = ({ open, onClose, onAdd, onSearch, onDayInfo, onPrint, onSetting
   ]
 
   return (
-    <div className='menu-slide-in no-print fixed inset-0 z-30 bg-[#FFF] dark:bg-[#201D1B]'>
+    <div
+      className='menu-slide-in no-print fixed inset-0 z-30 bg-[#FFF] dark:bg-[#201D1B]'
+      role='dialog'
+      aria-modal='true'
+      aria-label='Menyu'
+    >
       <div className='mx-auto flex h-full w-full max-w-[640px] flex-col'>
         <div className='flex items-center justify-between border-b border-[#EEE] px-[24px] py-[18px] dark:border-[#4A4440]'>
           <p className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Menyu</p>

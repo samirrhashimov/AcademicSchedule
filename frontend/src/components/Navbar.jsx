@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { FiAlignRight, FiCalendar, FiPlus, FiPrinter, FiSearch, FiSettings } from 'react-icons/fi'
+import { useGlobalShortcuts } from '../lib/useGlobalShortcuts'
 import AddModal from './AddModal'
 import NavMenu from './NavMenu'
 import NewSubjectModal from './NewSubjectModal'
@@ -13,6 +14,17 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false)
   const [isNavMenuOpen, setIsNavMenuOpen] = useState(false)
 
+  useGlobalShortcuts({
+    n: () => setIsAddMenuOpen(true),
+    N: () => setIsAddMenuOpen(true),
+    '/': () => setIsSearchOpen(true),
+    d: () => onOpenDayInfo(),
+    D: () => onOpenDayInfo(),
+    ',': () => setIsSettingsOpen(true),
+    p: () => window.print(),
+    P: () => window.print(),
+  })
+
   return (
     <div className='no-print'>
       <div className='my-[15px] flex flex-wrap items-center justify-between gap-[10px] border-b-[3px] border-b-[#A65B46] pb-[15px]'>
@@ -24,7 +36,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
             type='button'
             onClick={() => setIsAddMenuOpen(true)}
             aria-label='Əlavə et'
-            title='Əlavə et'
+            title='Əlavə et (N)'
             className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiPlus aria-hidden='true' />
@@ -33,7 +45,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
             type='button'
             onClick={() => setIsSearchOpen(true)}
             aria-label='Axtar'
-            title='Axtar'
+            title='Axtar (/)'
             className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiSearch aria-hidden='true' />
@@ -42,7 +54,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
             type='button'
             onClick={onOpenDayInfo}
             aria-label='Yaxınlıqdakılar'
-            title='Yaxınlıqdakılar'
+            title='Yaxınlıqdakılar (D)'
             className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiCalendar aria-hidden='true' />
@@ -51,7 +63,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
             type='button'
             onClick={() => window.print()}
             aria-label='Çap et'
-            title='Çap et'
+            title='Çap et (P)'
             className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiPrinter aria-hidden='true' />
@@ -60,7 +72,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
             type='button'
             onClick={() => setIsSettingsOpen(true)}
             aria-label='Tənzimləmələr'
-            title='Tənzimləmələr'
+            title='Tənzimləmələr (,)'
             className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiSettings aria-hidden='true' />

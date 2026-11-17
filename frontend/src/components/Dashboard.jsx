@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { FiBookOpen, FiChevronDown, FiChevronsLeft, FiChevronsRight, FiChevronLeft, FiChevronRight, FiClock, FiCopy, FiEdit2, FiMapPin, FiPlus, FiTrash2, FiUser, FiX } from 'react-icons/fi'
 import { useEscapeKey } from '../lib/useEscapeKey'
+import { useGlobalShortcuts } from '../lib/useGlobalShortcuts'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 import DayInfoModal from './DayInfoModal'
 import NewSubjectModal from './NewSubjectModal'
@@ -837,6 +838,13 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
         }
     }
 
+    useGlobalShortcuts({
+        ArrowLeft: () => goToWeek(addWeeks(viewedWeekStart, -1)),
+        ArrowRight: () => goToWeek(addWeeks(viewedWeekStart, 1)),
+        t: () => goToWeek(currentWeekStart),
+        T: () => goToWeek(currentWeekStart),
+    })
+
     return (
         <div className='flex flex-col gap-[15px] pb-[30px]'>
             {conflicts.length > 0 && (
@@ -895,7 +903,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                     type='button'
                                     onClick={() => goToWeek(addWeeks(viewedWeekStart, -1))}
                                     aria-label='Əvvəlki həftə'
-                                    title='Əvvəlki həftə'
+                                    title='Əvvəlki həftə (←)'
                                     className='flex items-center px-[10px] py-[5px] text-[15px] text-[#434140] hover:bg-[#EEE] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
                                 >
                                     <FiChevronLeft aria-hidden='true' />
@@ -904,6 +912,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                     <button
                                         type='button'
                                         onClick={() => goToWeek(currentWeekStart)}
+                                        title='Bu həftə (T)'
                                         className='border-x border-[#DDD] px-[12px] py-[5px] font-medium text-[#434140] hover:bg-[#EEE] dark:border-[#4A4440] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
                                     >
                                         Bu gün
@@ -913,7 +922,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                     type='button'
                                     onClick={() => goToWeek(addWeeks(viewedWeekStart, 1))}
                                     aria-label='Növbəti həftə'
-                                    title='Növbəti həftə'
+                                    title='Növbəti həftə (→)'
                                     className='flex items-center px-[10px] py-[5px] text-[15px] text-[#434140] hover:bg-[#EEE] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
                                 >
                                     <FiChevronRight aria-hidden='true' />
