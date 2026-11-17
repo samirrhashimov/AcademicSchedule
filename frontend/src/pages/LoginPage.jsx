@@ -19,7 +19,7 @@ const LoginPage = () => {
     try {
       const session = await login({ email: email.trim(), password })
       saveSession(session)
-      navigate('/', { replace: true })
+      navigate('/app', { replace: true })
     } catch (err) {
       setError(err.message || 'Giriş alınmadı.')
     } finally {

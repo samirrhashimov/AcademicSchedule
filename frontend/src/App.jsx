@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
 import Navbar from './components/Navbar'
 import Dashboard from './components/Dashboard'
+import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import { getToken } from './lib/auth'
@@ -314,13 +315,14 @@ function ScheduleApp() {
 
 const RequireAuth = ({ children }) => (getToken() ? children : <Navigate to='/login' replace />)
 
-const RequireGuest = ({ children }) => (getToken() ? <Navigate to='/' replace /> : children)
+const RequireGuest = ({ children }) => (getToken() ? <Navigate to='/app' replace /> : children)
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path='/' element={<RequireAuth><ScheduleApp /></RequireAuth>} />
+        <Route path='/' element={getToken() ? <Navigate to='/app' replace /> : <LandingPage />} />
+        <Route path='/app' element={<RequireAuth><ScheduleApp /></RequireAuth>} />
         <Route path='/login' element={<RequireGuest><LoginPage /></RequireGuest>} />
         <Route path='/register' element={<RequireGuest><RegisterPage /></RequireGuest>} />
         <Route path='*' element={<Navigate to='/' replace />} />

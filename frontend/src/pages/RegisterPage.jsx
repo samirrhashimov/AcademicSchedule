@@ -32,7 +32,7 @@ const RegisterPage = () => {
         password,
       })
       saveSession(session)
-      navigate('/', { replace: true })
+      navigate('/app', { replace: true })
     } catch (err) {
       setError(err.message || 'Qeydiyyat alınmadı.')
     } finally {
