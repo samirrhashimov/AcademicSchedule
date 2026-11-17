@@ -133,12 +133,12 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
 
   return (
     <div
-      className='modal-overlay-in fixed inset-0 z-10 flex items-center justify-center bg-black/50 p-[20px]'
+      className='modal-overlay-in fixed inset-0 z-10 flex items-center justify-center bg-black/50 p-0 sm:p-[20px]'
       role='dialog'
       aria-modal='true'
       aria-labelledby='add-title'
     >
-      <div className='modal-card-in w-full max-w-[600px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
+      <div className='modal-card-in h-full w-full max-w-none overflow-y-auto rounded-none bg-[#FFF] p-[24px] text-[#333] shadow-xl sm:h-auto sm:max-w-[600px] sm:rounded-[14px] dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
         <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px] dark:border-[#4A4440]'>
           <h2 id='add-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>
             {step === 'code' ? 'Şablon kodu' : 'Əlavə et'}

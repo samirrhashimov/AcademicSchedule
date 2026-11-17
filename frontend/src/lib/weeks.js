@@ -33,6 +33,12 @@ export const mondayOfWeek = (date) => {
 
 export const addWeeks = (monday, count) => new Date(monday.getTime() + (count * 7 * 86400000))
 
+// Mobil günbəgün keçid: gün indeksi (0-6) + həftə daşması.
+export const stepWeekday = (index, delta) => {
+  const next = index + delta
+  return { index: ((next % 7) + 7) % 7, weekDelta: Math.floor(next / 7) }
+}
+
 export const weeksBetween = (fromMonday, toMonday) => (
   Math.round((toMonday - fromMonday) / 604800000)
 )

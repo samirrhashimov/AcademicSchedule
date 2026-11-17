@@ -89,12 +89,12 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
 
   return (
     <div
-      className='modal-overlay-in fixed inset-0 z-10 flex items-center justify-center bg-black/50 p-[20px]'
+      className='modal-overlay-in fixed inset-0 z-10 flex items-center justify-center bg-black/50 p-0 sm:p-[20px]'
       role='dialog'
       aria-modal='true'
       aria-labelledby='settings-title'
     >
-      <div className='modal-card-in flex max-h-[85vh] w-full max-w-[420px] flex-col rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
+      <div className='modal-card-in flex h-full max-h-full w-full max-w-none flex-col rounded-none bg-[#FFF] p-[24px] text-[#333] shadow-xl sm:h-auto sm:max-h-[85vh] sm:max-w-[420px] sm:rounded-[14px] dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
         <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px] dark:border-[#4A4440]'>
           <h2 id='settings-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Tənzimləmələr</h2>
           <button

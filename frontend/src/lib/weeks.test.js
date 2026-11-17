@@ -10,6 +10,7 @@ import {
   parseDayKey,
   reanchorWeekState,
   resolveWeekType,
+  stepWeekday,
   toDayKey,
   withWeekOverride,
 } from './weeks.js'
@@ -64,6 +65,18 @@ describe('baza növbələşmə (anchor: 2026-11-09 Alt)', () => {
     assert.deepEqual(resolveWeekType(state, next), { mode: 'lower-week', isOverride: false })
     assert.equal(resolveWeekType(state, addWeeks(anchor, 2)).mode, 'upper-week')
     assert.equal(resolveWeekType(state, addWeeks(anchor, 3)).mode, 'lower-week')
+  })
+})
+
+describe('stepWeekday', () => {
+  it('həftə içində irəli-geri addımlayır', () => {
+    assert.deepEqual(stepWeekday(2, 1), { index: 3, weekDelta: 0 })
+    assert.deepEqual(stepWeekday(2, -1), { index: 1, weekDelta: 0 })
+  })
+
+  it('sərhəddə həftəni aşırır', () => {
+    assert.deepEqual(stepWeekday(6, 1), { index: 0, weekDelta: 1 })
+    assert.deepEqual(stepWeekday(0, -1), { index: 6, weekDelta: -1 })
   })
 })
 

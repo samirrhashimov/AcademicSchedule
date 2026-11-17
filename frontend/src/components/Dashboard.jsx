@@ -12,6 +12,7 @@ import {
   parseDayKey,
   reanchorWeekState,
   resolveWeekType,
+  stepWeekday,
   toDayKey,
   withWeekOverride,
 } from '../lib/weeks'
@@ -373,7 +374,7 @@ const SubjectMenu = ({ subjects, onRequestRemoveSubject, onEditSubject, onDuplic
     </aside>
 )
 
-const CalendarEvent = ({ subject, lesson, sequenceIndex, onRequestTypeChange, onEditSubject, heightPx = 82 }) => {
+const CalendarEvent = ({ subject, lesson, sequenceIndex, onRequestTypeChange, onEditSubject, onSelect, heightPx = 82 }) => {
     const type = resolveLessonType(subject, sequenceIndex)
     const overridden = isOverridden(subject, sequenceIndex)
     const isLecture = type === 'lecture'
@@ -386,12 +387,15 @@ const CalendarEvent = ({ subject, lesson, sequenceIndex, onRequestTypeChange, on
 
     return (
     <div
-        onClick={(event) => event.stopPropagation()}
+        onClick={(event) => {
+            event.stopPropagation()
+            onSelect?.()
+        }}
         onContextMenu={(event) => {
             event.preventDefault()
             onEditSubject(subject)
         }}
-        title='Redaktə etmək üçün sağ kliklə'
+        title={onSelect ? 'Redaktə etmək üçün kliklə' : 'Redaktə etmək üçün sağ kliklə'}
         className={`print-exact flex h-full cursor-context-menu flex-col overflow-hidden rounded-[8px] border-l-[4px] text-[13px] text-[#333] transition-[filter] hover:brightness-95 ${tier === 0 ? 'p-[6px]' : 'p-[8px]'} ${
         isLecture
             ? 'border-[#A65B46] bg-[#FCE5E0]'
@@ -440,12 +444,12 @@ const TypeChangeDialog = ({ pending, onChoose, onCancel }) => {
 
     return (
         <div
-            className='modal-overlay-in fixed inset-0 z-20 flex items-center justify-center bg-black/50 p-[20px]'
+            className='modal-overlay-in fixed inset-0 z-20 flex items-center justify-center bg-black/50 p-0 sm:p-[20px]'
             role='dialog'
             aria-modal='true'
             aria-labelledby='type-change-title'
         >
-            <div className='modal-card-in w-full max-w-[420px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
+            <div className='modal-card-in h-full w-full max-w-none overflow-y-auto rounded-none bg-[#FFF] p-[24px] text-[#333] shadow-xl sm:h-auto sm:max-w-[420px] sm:rounded-[14px] dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
                 <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px] dark:border-[#4A4440]'>
                     <h2 id='type-change-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Dərs tipini dəyiş</h2>
                     <button
@@ -499,12 +503,12 @@ const WeekTypeChangeDialog = ({ pending, currentLabel, onChoose, onCancel }) => 
 
     return (
         <div
-            className='modal-overlay-in fixed inset-0 z-20 flex items-center justify-center bg-black/50 p-[20px]'
+            className='modal-overlay-in fixed inset-0 z-20 flex items-center justify-center bg-black/50 p-0 sm:p-[20px]'
             role='dialog'
             aria-modal='true'
             aria-labelledby='week-type-change-title'
         >
-            <div className='modal-card-in w-full max-w-[420px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
+            <div className='modal-card-in h-full w-full max-w-none overflow-y-auto rounded-none bg-[#FFF] p-[24px] text-[#333] shadow-xl sm:h-auto sm:max-w-[420px] sm:rounded-[14px] dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
                 <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px] dark:border-[#4A4440]'>
                     <h2 id='week-type-change-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Həftənin tipini dəyiş</h2>
                     <button
@@ -557,12 +561,12 @@ const DeleteConfirmDialog = ({ subject, onConfirm, onCancel }) => {
 
     return (
         <div
-            className='modal-overlay-in fixed inset-0 z-20 flex items-center justify-center bg-black/50 p-[20px]'
+            className='modal-overlay-in fixed inset-0 z-20 flex items-center justify-center bg-black/50 p-0 sm:p-[20px]'
             role='dialog'
             aria-modal='true'
             aria-labelledby='delete-confirm-title'
         >
-            <div className='modal-card-in w-full max-w-[380px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
+            <div className='modal-card-in h-full w-full max-w-none overflow-y-auto rounded-none bg-[#FFF] p-[24px] text-[#333] shadow-xl sm:h-auto sm:max-w-[380px] sm:rounded-[14px] dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
                 <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px] dark:border-[#4A4440]'>
                     <h2 id='delete-confirm-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Fənni sil</h2>
                     <button
@@ -639,10 +643,14 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
     }
     const [sidebarOpen, setSidebarOpen] = useState(() => {
         try {
-            return localStorage.getItem('academic-schedule-sidebar-open') !== '0'
+            const saved = localStorage.getItem('academic-schedule-sidebar-open')
+            if (saved === '0' || saved === '1') {
+                return saved === '1'
+            }
         } catch {
             return true
         }
+        return window.innerWidth >= 1024
     })
 
     const toggleSidebar = () => {
@@ -670,6 +678,34 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
         setViewedWeekStart(monday)
         const index = Math.round((todayMidnight - monday) / 86400000)
         setMobileDay(index >= 0 && index < 7 ? days[index] : days[0])
+    }
+
+    // Mobil günbəgün keçid: sərhəddə həftə dəyişir.
+    const stepMobileDay = (delta) => {
+        const current = days.indexOf(mobileDay)
+        const { index, weekDelta } = stepWeekday(current < 0 ? 0 : current, delta)
+        if (weekDelta !== 0) {
+            setViewedWeekStart(addWeeks(viewedWeekStart, weekDelta))
+        }
+        setMobileDay(days[index])
+    }
+
+    // Mobil siyahıda barmaqla sağa-sola sürüşdürmə.
+    const touchStartX = useRef(null)
+    const handleTouchStart = (event) => {
+        touchStartX.current = event.touches[0]?.clientX ?? null
+    }
+    const handleTouchEnd = (event) => {
+        if (touchStartX.current === null) {
+            return
+        }
+        const deltaX = touchStartX.current - (event.changedTouches[0]?.clientX ?? touchStartX.current)
+        touchStartX.current = null
+        if (deltaX > 50) {
+            stepMobileDay(1)
+        } else if (deltaX < -50) {
+            stepMobileDay(-1)
+        }
     }
 
     const requestWeekModeChange = (mode) => {
@@ -752,6 +788,8 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
     const tomorrowLessons = lessonsIn(tomorrowActiveSubjects, tomorrowDayName, tomorrowWeekNumber)
 
     const mobileLessons = lessonsIn(activeSubjects, mobileDay, viewedWeekNumber)
+    const mobileDate = weekDays[days.indexOf(mobileDay)]?.date
+    const mobileDateLabel = mobileDate ? `${mobileDate.getDate()}.${String(mobileDate.getMonth() + 1).padStart(2, '0')}` : ''
 
     // Axtarışdan keçid: cari həftəyə qayıt, dərsi işıqlandır və ora sürüşdür.
     useEffect(() => {
@@ -815,8 +853,9 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                 </div>
             )}
 
-            <div className={`flex flex-col gap-[15px] lg:flex-row ${sidebarOpen ? 'lg:gap-[15px]' : 'lg:gap-0'}`}>
-                <div className={`no-print shrink-0 overflow-hidden transition-[width,opacity] duration-300 ease-in-out ${sidebarOpen ? 'w-full opacity-100 lg:w-[250px]' : 'hidden opacity-0 lg:block lg:h-auto lg:w-0'}`}>
+            <div className={`flex flex-col lg:flex-row ${sidebarOpen ? 'gap-[15px] lg:gap-[15px]' : 'gap-0 lg:gap-0'}`}>
+                <div className={`no-print grid shrink-0 transition-[grid-template-rows,opacity,width] duration-300 ease-in-out ${sidebarOpen ? 'grid-rows-[1fr] w-full opacity-100 lg:w-[250px]' : 'grid-rows-[0fr] w-full opacity-0 lg:w-0'}`}>
+                    <div className='min-h-0 overflow-hidden'>
                     <SubjectMenu
                         subjects={subjects}
                         onRequestRemoveSubject={setPendingDeleteSubject}
@@ -829,6 +868,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                         onHideSidebar={toggleSidebar}
                         onAddSubject={() => setIsAddModalOpen(true)}
                     />
+                    </div>
                 </div>
                 <main className='min-w-0 flex-1'>
                     {!sidebarOpen && (
@@ -842,7 +882,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                             <FiChevronsRight aria-hidden='true' />
                         </button>
                     )}
-                    <div className='mb-[10px] flex items-center justify-between'>
+                    <div className='mb-[10px] flex flex-wrap items-center justify-between gap-[10px]'>
                         <div className='print:hidden'>
                             <h1 className='text-[22px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Həftəlik cədvəl</h1>
                             <p className='text-[13px] text-[#666] dark:text-[#A8A29E]'>
@@ -902,6 +942,30 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                         </div>
                     </div>
 
+                    <div className='no-print mb-[10px] flex items-center justify-between rounded-[8px] bg-[#FFF] p-[8px] shadow-sm lg:hidden dark:bg-[#2A2724]'>
+                        <button
+                            type='button'
+                            onClick={() => stepMobileDay(-1)}
+                            aria-label='Əvvəlki gün'
+                            title='Əvvəlki gün'
+                            className='rounded-[5px] p-[8px] text-[18px] text-[#434140] hover:bg-[#EEE] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+                        >
+                            <FiChevronLeft aria-hidden='true' />
+                        </button>
+                        <div className='text-center'>
+                            <p className='text-[15px] font-bold text-[#434140] dark:text-[#EDE8DF]'>{mobileDay}</p>
+                            <p className='text-[12px] text-[#666] dark:text-[#A8A29E]'>{mobileDateLabel}</p>
+                        </div>
+                        <button
+                            type='button'
+                            onClick={() => stepMobileDay(1)}
+                            aria-label='Növbəti gün'
+                            title='Növbəti gün'
+                            className='rounded-[5px] p-[8px] text-[18px] text-[#434140] hover:bg-[#EEE] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+                        >
+                            <FiChevronRight aria-hidden='true' />
+                        </button>
+                    </div>
                     <div className='no-print mb-[10px] flex gap-[6px] overflow-x-auto rounded-[8px] bg-[#FFF] p-[8px] shadow-sm lg:hidden dark:bg-[#2A2724]'>
                         {days.map((day) => (
                             <button
@@ -914,7 +978,12 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                             </button>
                         ))}
                     </div>
-                    <div key={mobileDay} className='week-fade no-print flex flex-col gap-[8px] lg:hidden'>
+                    <div
+                        key={`${toDayKey(viewedWeekStart)}-${mobileDay}`}
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                        className='week-fade no-print flex flex-col gap-[8px] lg:hidden'
+                    >
                         {mobileLessons.length === 0 ? (
                             <p className='rounded-[8px] bg-[#FFF] p-[12px] text-[13px] text-[#777] shadow-sm dark:bg-[#2A2724] dark:text-[#A8A29E]'>
                                 {mobileDay} günü dərs yoxdur.
@@ -928,6 +997,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                     sequenceIndex={sequenceIndex}
                                     onRequestTypeChange={requestTypeChange}
                                     onEditSubject={setEditingSubject}
+                                    onSelect={() => setEditingSubject(subject)}
                                     heightPx={160}
                                 />
                             ))

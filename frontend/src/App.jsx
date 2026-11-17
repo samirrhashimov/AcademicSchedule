@@ -272,7 +272,7 @@ function ScheduleApp() {
   }
 
   return (
-    <div className='container mx-auto px-[20px] sm:px-[40px] lg:px-[60px]'>
+    <div className='container mx-auto px-[12px] sm:px-[40px] lg:px-[60px]'>
       {error && (
         <div className='mt-[15px] flex items-center justify-between gap-[10px] rounded-[8px] border border-[#A65B46] bg-[#FCE5E0] p-[12px] text-[13px] text-[#6E3A2C]'>
           <span>{error}</span>

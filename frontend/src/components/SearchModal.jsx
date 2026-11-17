@@ -37,12 +37,12 @@ const SearchModal = ({ subjects, onClose, onSelectLesson, weekSystem = 'double' 
 
   return (
     <div
-      className='modal-overlay-in fixed inset-0 z-10 flex items-center justify-center bg-black/50 p-[20px]'
+      className='modal-overlay-in fixed inset-0 z-10 flex items-center justify-center bg-black/50 p-0 sm:p-[20px]'
       role='dialog'
       aria-modal='true'
       aria-labelledby='search-title'
     >
-      <div className='modal-card-in flex max-h-[90vh] w-full max-w-[520px] flex-col overflow-hidden rounded-[14px] bg-[#FFF] text-[#333] shadow-xl dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
+      <div className='modal-card-in flex h-full max-h-full w-full max-w-none flex-col overflow-hidden rounded-none bg-[#FFF] text-[#333] shadow-xl sm:h-auto sm:max-h-[90vh] sm:max-w-[520px] sm:rounded-[14px] dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
         <div className='flex shrink-0 items-center justify-between border-b border-[#EEE] bg-[#FFF] px-[24px] py-[18px] dark:border-[#4A4440] dark:bg-[#2A2724]'>
           <h2 id='search-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Axtarış</h2>
           <button

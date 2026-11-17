@@ -89,6 +89,20 @@ html.dark {
   animation: modal-card-in 0.24s cubic-bezier(0.21, 1.02, 0.73, 1);
 }
 
+/* Naviqasiya menyusu sağdan sürüşür */
+@keyframes menu-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.menu-slide-in {
+  animation: menu-slide-in 0.25s ease-out;
+}
+
 /* Həftə dəyişəndə cədvəlin yumşaq yenilənməsi */
 @keyframes week-fade {
   from {
