@@ -44,6 +44,12 @@ export const login = (payload) => request('/api/auth/login', {
 
 export const fetchTemplate = (code) => request(`/api/templates/${encodeURIComponent(code)}`)
 
+export const fetchTemplatePreview = (code) => request(`/api/templates/${encodeURIComponent(code)}/preview`)
+
+export const fetchMyTemplates = () => request('/api/templates/mine')
+
+export const deleteTemplate = (code) => request(`/api/templates/${encodeURIComponent(code)}`, { method: 'DELETE' })
+
 export const createTemplate = (payload) => request('/api/templates', {
   method: 'POST',
   body: JSON.stringify(payload),

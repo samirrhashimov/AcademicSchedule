@@ -16,7 +16,7 @@ const toMinutes = (time) => {
 
 const LessonList = ({ lessons, nowMinutes, showState }) => {
   if (lessons.length === 0) {
-    return <p className='text-[14px] text-[#777] dark:text-[#A8A29E]'>Dərs yoxdur.</p>
+    return <p className='text-[14px] text-[#777] dark:text-[#A8A29E]'>Dərs yoxdur</p>
   }
   return (
     <ul className='flex flex-col gap-[8px]'>

@@ -15,7 +15,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
     <div className='no-print'>
       <div className='my-[15px] flex flex-wrap items-center justify-between gap-[10px] border-b-[3px] border-b-[#A65B46] pb-[15px]'>
         <div className=''>
-          <p className='font-bold font-["Trirong"] text-[20px] text-[#A65B46]'>AcademicSchedule</p>
+          <p className='font-bold font-["Trirong"] text-[20px] text-[#A65B46] dark:text-[#FFF]'>AcademicSchedule</p>
         </div>
         <div className='flex flex-wrap items-center gap-[10px]'>
           <button

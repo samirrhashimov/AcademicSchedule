@@ -9,6 +9,7 @@ const templateSchema = new mongoose.Schema({
     trim: true,
   },
   name: { type: String, default: '' },
+  downloads: { type: Number, default: 0 },
   subjects: { type: [mongoose.Schema.Types.Mixed], default: [] },
   createdBy: { type: String, index: true },
   expiresAt: { type: Date, default: null },

@@ -49,7 +49,10 @@ router.post('/', async (req, res, next) => {
         return res.status(400).json({ error: 'Fənn məlumatı yanlışdır.' })
       }
     }
-    const name = String(req.body?.name || '').trim().slice(0, 80) || 'Paylaşılan cədvəl'
+    const name = String(req.body?.name || '').trim().slice(0, 80)
+    if (!name) {
+      return res.status(400).json({ error: 'Şablon adı yaz.' })
+    }
     const rawTtl = req.body?.expiresInDays
     const expiresAt = (rawTtl === 0 || rawTtl === null)
       ? undefined
@@ -76,7 +79,23 @@ router.post('/', async (req, res, next) => {
   }
 })
 
-router.get('/:code', async (req, res, next) => {
+router.get('/mine', async (req, res, next) => {
+  try {
+    const templates = await Template.find({ createdBy: req.userId }).sort({ createdAt: -1 }).lean()
+    res.json(templates.map((template) => ({
+      code: template.code,
+      name: template.name,
+      subjectCount: Array.isArray(template.subjects) ? template.subjects.length : 0,
+      downloads: template.downloads || 0,
+      expiresAt: template.expiresAt || null,
+      createdAt: template.createdAt,
+    })))
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.get('/:code/preview', async (req, res, next) => {
   try {
     const code = String(req.params.code || '').trim().toUpperCase()
     if (!code) {
@@ -86,7 +105,45 @@ router.get('/:code', async (req, res, next) => {
     if (!template) {
       return res.status(404).json({ error: 'Şablon tapılmadı.' })
     }
+    res.json({
+      code: template.code,
+      name: template.name,
+      subjectCount: Array.isArray(template.subjects) ? template.subjects.length : 0,
+      downloads: template.downloads || 0,
+      expiresAt: template.expiresAt || null,
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.get('/:code', async (req, res, next) => {
+  try {
+    const code = String(req.params.code || '').trim().toUpperCase()
+    if (!code) {
+      return res.status(400).json({ error: 'Kod yaz.' })
+    }
+    const template = await Template.findOneAndUpdate({ code }, { $inc: { downloads: 1 } }, { new: true }).lean()
+    if (!template) {
+      return res.status(404).json({ error: 'Şablon tapılmadı.' })
+    }
     res.json({ code: template.code, name: template.name, subjects: template.subjects || [] })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.delete('/:code', async (req, res, next) => {
+  try {
+    const code = String(req.params.code || '').trim().toUpperCase()
+    if (!code) {
+      return res.status(400).json({ error: 'Kod yaz.' })
+    }
+    const template = await Template.findOneAndDelete({ code, createdBy: req.userId })
+    if (!template) {
+      return res.status(404).json({ error: 'Şablon tapılmadı.' })
+    }
+    res.status(204).send()
   } catch (error) {
     next(error)
   }

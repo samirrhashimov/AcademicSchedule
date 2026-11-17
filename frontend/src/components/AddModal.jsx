@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FiLayers, FiPlus, FiUpload, FiX } from 'react-icons/fi'
-import { fetchTemplate, importSubjects, saveWeekState } from '../lib/api'
+import { fetchTemplate, fetchTemplatePreview, importSubjects, saveWeekState } from '../lib/api'
 import { parseBackup } from '../lib/backup'
 import { normalizeSubject } from '../lib/subjects'
 import { useEscapeKey } from '../lib/useEscapeKey'
@@ -11,19 +11,39 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
   const [step, setStep] = useState('menu')
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
+  const [preview, setPreview] = useState(null)
+  const [menuIndex, setMenuIndex] = useState(0)
   const fileInputRef = useRef(null)
+  const menuRefs = useRef([])
   const resetForm = () => {
     setStep('menu')
     setStatus(null)
     setCode('')
     setBusy(false)
+    setPreview(null)
   }
   const handleClose = () => {
     resetForm()
     onClose()
   }
+  const handleEscape = () => {
+    if (preview) {
+      setPreview(null)
+      return
+    }
+    if (step === 'code') {
+      setStep('menu')
+      return
+    }
+    handleClose()
+  }
   useLockBodyScroll(open)
-  useEscapeKey(handleClose, open)
+  useEscapeKey(handleEscape, open)
+  useEffect(() => {
+    if (open && step === 'menu') {
+      menuRefs.current[menuIndex]?.focus()
+    }
+  }, [open, step, menuIndex])
   if (!open) {
     return null
   }
@@ -51,7 +71,7 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
     reader.readAsText(file)
   }
 
-  const handleApplyCode = async (event) => {
+  const handleCheckCode = async (event) => {
     event.preventDefault()
     const clean = code.trim().toUpperCase()
     if (!clean || busy) {
@@ -60,7 +80,46 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
     setBusy(true)
     setStatus(null)
     try {
-      const template = await fetchTemplate(clean)
+      const meta = await fetchTemplatePreview(clean)
+      setPreview(meta)
+    } catch (error) {
+      setStatus({ ok: false, message: error.message || 'Şablon tapılmadı.' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleMenuKeyDown = (event) => {
+    const count = menuRefs.current.length
+    if (count === 0) {
+      return
+    }
+    let next = null
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      next = (menuIndex + 1) % count
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      next = (menuIndex - 1 + count) % count
+    } else if (event.key === 'Home') {
+      next = 0
+    } else if (event.key === 'End') {
+      next = count - 1
+    }
+    if (next === null) {
+      return
+    }
+    event.preventDefault()
+    setMenuIndex(next)
+    menuRefs.current[next]?.focus()
+  }
+
+  const handleConfirmLoad = async () => {
+    if (!preview || busy) {
+      return
+    }
+    setBusy(true)
+    setStatus(null)
+    try {
+      const template = await fetchTemplate(preview.code)
       const fresh = template.subjects.map((subject) => normalizeSubject({ ...subject, id: undefined }))
       await importSubjects(fresh)
       setStatus({ ok: true })
@@ -79,7 +138,7 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
       aria-modal='true'
       aria-labelledby='add-title'
     >
-      <div className='modal-card-in w-full max-w-[520px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
+      <div className='modal-card-in w-full max-w-[600px] rounded-[14px] bg-[#FFF] p-[24px] text-[#333] shadow-xl dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
         <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px] dark:border-[#4A4440]'>
           <h2 id='add-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>
             {step === 'code' ? 'Şablon kodu' : 'Əlavə et'}
@@ -94,11 +153,13 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
           </button>
         </div>
         {step === 'menu' ? (
-          <div className='grid grid-cols-1 gap-[10px] sm:grid-cols-3'>
+          <div className='grid grid-cols-1 gap-[10px] sm:grid-cols-3' onKeyDown={handleMenuKeyDown}>
             <button
               type='button'
+              ref={(element) => { menuRefs.current[0] = element }}
+              onFocus={() => setMenuIndex(0)}
               onClick={onSelectNew}
-              className='flex min-h-[230px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[#D8D5CE] bg-[#FAFAF8] px-[20px] py-[28px] text-center hover:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B]'
+              className='flex min-h-[230px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[#D8D5CE] bg-[#FAFAF8] px-[20px] py-[28px] text-center hover:border-[#A65B46] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B]'
             >
               <FiPlus aria-hidden='true' className='mb-[10px] text-[72px] text-[#434140] dark:text-[#E7D8C6]' />
               <span className='text-[15px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Yeni fənn</span>
@@ -106,8 +167,10 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
             </button>
             <button
               type='button'
+              ref={(element) => { menuRefs.current[1] = element }}
+              onFocus={() => setMenuIndex(1)}
               onClick={() => fileInputRef.current?.click()}
-              className='flex min-h-[230px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[#D8D5CE] bg-[#FAFAF8] px-[20px] py-[28px] text-center hover:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B]'
+              className='flex min-h-[230px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[#D8D5CE] bg-[#FAFAF8] px-[20px] py-[28px] text-center hover:border-[#A65B46] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B]'
             >
               <FiUpload aria-hidden='true' className='mb-[10px] text-[72px] text-[#434140] dark:text-[#E7D8C6]' />
               <span className='text-[15px] font-bold text-[#434140] dark:text-[#EDE8DF]'>İdxal et</span>
@@ -115,17 +178,44 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
             </button>
             <button
               type='button'
+              ref={(element) => { menuRefs.current[2] = element }}
+              onFocus={() => setMenuIndex(2)}
               onClick={() => setStep('code')}
               aria-label='Şablon kodu ilə yüklə'
-              className='flex min-h-[230px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[#D8D5CE] bg-[#FAFAF8] px-[20px] py-[28px] text-center hover:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B]'
+              className='flex min-h-[230px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[#D8D5CE] bg-[#FAFAF8] px-[20px] py-[28px] text-center hover:border-[#A65B46] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B]'
             >
               <FiLayers aria-hidden='true' className='mb-[10px] text-[72px] text-[#434140] dark:text-[#E7D8C6]' />
               <span className='text-[15px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Şablon kodu</span>
               <span className='text-[12px] text-[#777] dark:text-[#A8A29E]'>Kodu yaz, hazır cədvəli yüklə</span>
             </button>
           </div>
+        ) : preview ? (
+          <div className='flex flex-col gap-[12px]'>
+            <div className='rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
+              <p className='truncate text-[15px] font-bold text-[#434140] dark:text-[#EDE8DF]'>{preview.name}</p>
+              <p className='text-[12px] text-[#777] dark:text-[#A8A29E]'>{preview.subjectCount} fənn</p>
+            </div>
+            <div className='flex gap-[10px]'>
+              <button
+                type='button'
+                onClick={() => setPreview(null)}
+                disabled={busy}
+                className='flex-1 rounded-[8px] border border-[#D8D5CE] px-[12px] py-[10px] text-[14px] font-medium text-[#434140] hover:bg-[#F7F3EC] disabled:opacity-60 dark:border-[#4A4440] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'
+              >
+                Ləğv et
+              </button>
+              <button
+                type='button'
+                onClick={handleConfirmLoad}
+                disabled={busy}
+                className='flex-1 rounded-[8px] bg-[#434140] py-[10px] font-medium text-[#E7D8C6] hover:bg-[#555250] disabled:opacity-60 dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
+              >
+                {busy ? 'Gözlə…' : 'Davam et'}
+              </button>
+            </div>
+          </div>
         ) : (
-          <form onSubmit={handleApplyCode} className='flex flex-col gap-[12px]'>
+          <form onSubmit={handleCheckCode} className='flex flex-col gap-[12px]'>
             <label className='block'>
               <span className='mb-[6px] block text-[13px] font-semibold text-[#434140] dark:text-[#EDE8DF]'>Şablon kodu</span>
               <input
@@ -152,7 +242,7 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
                 disabled={busy}
                 className='flex-1 rounded-[8px] bg-[#434140] py-[10px] font-medium text-[#E7D8C6] hover:bg-[#555250] disabled:opacity-60 dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
               >
-                {busy ? 'Gözlə…' : 'Yüklə'}
+                {busy ? 'Gözlə…' : 'Yoxla'}
               </button>
             </div>
           </form>
