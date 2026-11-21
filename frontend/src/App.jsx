@@ -8,7 +8,7 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
-import { getToken } from './lib/auth'
+import { getToken, getUser } from './lib/auth'
 import {
   normalizeSubject,
   withOnceOverride,
@@ -25,7 +25,7 @@ import {
   updateSubject as apiUpdateSubject,
 } from './lib/api'
 import { defaultWeekState, getWeekNumber, mondayOfWeek, normalizeWeekState } from './lib/weeks'
-import { initOneSignal } from './lib/onesignal'
+import { initOneSignal, linkPushUser } from './lib/onesignal'
 import { setLeadMinutes } from './lib/notifications'
 
 // Köhnə localStorage açarları — yalnız ilk açılışda MongoDB-yə köçürmək üçün oxunur.
@@ -175,6 +175,13 @@ function ScheduleApp() {
     apiFetchNotifyLead()
       .then(({ notifyLead }) => setLeadMinutes(notifyLead))
       .catch(() => {})
+  }, [])
+
+  // Artıq daxil olmuş sessiyalar üçün push hesabını bağla.
+  useEffect(() => {
+    if (getToken()) {
+      linkPushUser(getUser()?.id)
+    }
   }, [])
 
   useEffect(() => {

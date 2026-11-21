@@ -31,11 +31,11 @@ const DEFAULT_LEAD = 10
 const sent = { date: '', keys: new Set() }
 
 const sendPush = async (userId, heading, content) => {
-  const response = await fetch('https://api.onesignal.com/notifications', {
+  const response = await fetch('https://onesignal.com/api/v1/notifications', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Key ${process.env.ONESIGNAL_API_KEY}`,
+      Authorization: `Basic ${process.env.ONESIGNAL_API_KEY}`,
     },
     body: JSON.stringify({
       app_id: process.env.ONESIGNAL_APP_ID,
@@ -105,6 +105,7 @@ export const checkDueLessons = async (now = new Date()) => {
             `${lesson.startTime} • ${TYPE_LABELS[resolveLessonType(effective, sequenceIndex)]}`,
           ).then(() => {
             pushed += 1
+            console.log(`Push göndərildi: ${subject.name} (${lesson.startTime})`)
           }).catch((error) => {
             sent.keys.delete(key)
             console.error(`Push göndərilmədi (${subject.name}):`, error.message || error)
