@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FiBell, FiCheck, FiClock, FiCopy, FiDownload, FiLayers, FiLock, FiLogOut, FiMoon, FiShare2, FiSun, FiTrash2, FiX } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { buildBackup, downloadBackup } from '../lib/backup'
@@ -6,6 +6,7 @@ import { clearSession, getUser } from '../lib/auth'
 import { createTemplate, deleteAccount, saveNotifyLead } from '../lib/api'
 import { MAX_LEAD, MIN_LEAD, PRESET_LEADS, cleanLead, getLeadMinutes, isPresetLead, notificationsEnabled, setLeadMinutes, setNotificationsEnabled } from '../lib/notifications'
 import { isOneSignalConfigured, optInPush, optOutPush, unlinkPushUser } from '../lib/onesignal'
+import { isInstallAvailable, onInstallAvailable, promptInstall } from '../lib/pwa'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 import ChangePasswordModal from './ChangePasswordModal'
@@ -50,6 +51,8 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
     const stored = getLeadMinutes()
     return isPresetLead(stored) ? '' : String(stored)
   })
+  const [canInstall, setCanInstall] = useState(isInstallAvailable)
+  useEffect(() => onInstallAvailable(setCanInstall), [])
   useLockBodyScroll(open && !showTemplates && !showPassword)
   useEscapeKey(onClose, open && !showTemplates && !showPassword)
   if (!open) {
@@ -287,6 +290,19 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
           <p className='mb-[10px] rounded-[6px] bg-[#FCE5E0] p-[8px] text-[13px] text-[#A65B46]'>{notifMsg}</p>
         )}
         <p className='mb-[10px] text-[14px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Məlumat</p>
+        {canInstall && (
+          <div className='mb-[10px] flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
+            <p className='truncate text-[14px] font-medium'>Tətbiqi yüklə</p>
+            <button
+              type='button'
+              onClick={() => promptInstall()}
+              className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
+            >
+              <FiDownload aria-hidden='true' />
+              Yüklə
+            </button>
+          </div>
+        )}
         <div className='mb-[10px] flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
           <div className='min-w-0'>
             <p className='truncate text-[14px] font-medium'>Yedəkləmə</p>

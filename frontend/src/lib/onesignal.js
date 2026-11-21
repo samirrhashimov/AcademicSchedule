@@ -14,6 +14,8 @@ export const initOneSignal = () => {
     initPromise = OneSignal.init({
       appId: APP_ID,
       allowLocalhostAsSecureOrigin: true,
+      // PWA worker kökdədir — OneSignal ayrı scopeda qalır (köhnə abunələr pozulmur).
+      serviceWorkerParam: { scope: '/push/onesignal/' },
     }).then(() => true).catch(() => false)
   }
   return initPromise
