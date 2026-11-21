@@ -147,7 +147,7 @@ router.put('/password', authLimiter, requireAuth, async (req, res, next) => {
     }
     const user = await User.findById(req.userId)
     if (!user || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
-      return res.status(401).json({ error: 'Cari şifrə səhvdir.' })
+      return res.status(403).json({ error: 'Cari şifrə səhvdir.' })
     }
     user.passwordHash = await bcrypt.hash(newPassword, 10)
     await user.save()
@@ -192,7 +192,7 @@ router.delete('/me', authLimiter, requireAuth, async (req, res, next) => {
     const password = String(req.body?.password || '')
     const user = await User.findById(req.userId)
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      return res.status(401).json({ error: 'Şifrə səhvdir.' })
+      return res.status(403).json({ error: 'Şifrə səhvdir.' })
     }
     await Subject.deleteMany({ userId: req.userId })
     await WeekState.deleteMany({ userId: req.userId })
