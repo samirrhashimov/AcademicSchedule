@@ -13,6 +13,8 @@ if (!process.env.JWT_SECRET) {
 }
 
 const app = express()
+// Coolify proksisinin arxasında real IP-ni görmək üçün (rate limit düzgün işləsin).
+app.set('trust proxy', 1)
 const PORT = process.env.PORT || 5000
 const origins = (process.env.CLIENT_URL || 'http://localhost:5173').split(',').map((origin) => origin.trim())
 

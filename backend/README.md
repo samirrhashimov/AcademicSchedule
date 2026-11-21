@@ -18,6 +18,10 @@ API: `http://localhost:5000/api/health`
 
 - `POST /api/auth/register` — `{ name, email, password }` → `{ token, user }`
 - `POST /api/auth/login` — `{ email, password }` → `{ token, user }`
+- `POST /api/auth/forgot-password` — `{ email }` → bərpa linki e-poçta gedir (SMTP lazımdır)
+- `POST /api/auth/reset-password` — `{ token, password }` → şifrə yenilənir
+- `PUT /api/auth/password` — `{ currentPassword, newPassword }` (JWT lazımdır)
+- `DELETE /api/auth/me` — `{ password }` → hesab + bütün məlumatlar silinir (JWT lazımdır)
 - `GET/POST /api/subjects`, `PUT/DELETE /api/subjects/:id` (JWT lazımdır)
 - `GET/PUT /api/week-state` (JWT lazımdır)
 - `POST /api/templates` — `{ name?, subjects }` → `{ code, name }` (JWT lazımdır)

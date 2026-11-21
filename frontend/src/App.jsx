@@ -3,9 +3,11 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
 import Navbar from './components/Navbar'
 import Dashboard from './components/Dashboard'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import { getToken } from './lib/auth'
 import {
   normalizeSubject,
@@ -325,6 +327,8 @@ function App() {
         <Route path='/app' element={<RequireAuth><ScheduleApp /></RequireAuth>} />
         <Route path='/login' element={<RequireGuest><LoginPage /></RequireGuest>} />
         <Route path='/register' element={<RequireGuest><RegisterPage /></RequireGuest>} />
+        <Route path='/forgot-password' element={<RequireGuest><ForgotPasswordPage /></RequireGuest>} />
+        <Route path='/reset-password/:token' element={<ResetPasswordPage />} />
         <Route path='*' element={<Navigate to='/' replace />} />
       </Routes>
     </BrowserRouter>

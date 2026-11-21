@@ -42,6 +42,26 @@ export const login = (payload) => request('/api/auth/login', {
   body: JSON.stringify(payload),
 })
 
+export const forgotPassword = (email) => request('/api/auth/forgot-password', {
+  method: 'POST',
+  body: JSON.stringify({ email }),
+})
+
+export const resetPassword = (payload) => request('/api/auth/reset-password', {
+  method: 'POST',
+  body: JSON.stringify(payload),
+})
+
+export const changePassword = (payload) => request('/api/auth/password', {
+  method: 'PUT',
+  body: JSON.stringify(payload),
+})
+
+export const deleteAccount = (password) => request('/api/auth/me', {
+  method: 'DELETE',
+  body: JSON.stringify({ password }),
+})
+
 export const fetchTemplate = (code) => request(`/api/templates/${encodeURIComponent(code)}`)
 
 export const fetchTemplatePreview = (code) => request(`/api/templates/${encodeURIComponent(code)}/preview`)

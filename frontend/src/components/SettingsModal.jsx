@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { FiCheck, FiClock, FiCopy, FiDownload, FiLayers, FiLogOut, FiMoon, FiShare2, FiSun, FiX } from 'react-icons/fi'
+import { FiCheck, FiClock, FiCopy, FiDownload, FiLayers, FiLock, FiLogOut, FiMoon, FiShare2, FiSun, FiTrash2, FiX } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { buildBackup, downloadBackup } from '../lib/backup'
 import { clearSession, getUser } from '../lib/auth'
-import { createTemplate } from '../lib/api'
+import { createTemplate, deleteAccount } from '../lib/api'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
+import ChangePasswordModal from './ChangePasswordModal'
 import TemplatesModal from './TemplatesModal'
 
 const TTL_KEY = 'academic-schedule-template-ttl'
@@ -34,8 +35,13 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
   const [ttlDays, setTtlDays] = useState(readTtl)
   const [shareName, setShareName] = useState('')
   const [showTemplates, setShowTemplates] = useState(false)
-  useLockBodyScroll(open && !showTemplates)
-  useEscapeKey(onClose, open && !showTemplates)
+  const [showPassword, setShowPassword] = useState(false)
+  const [delConfirm, setDelConfirm] = useState(false)
+  const [delPassword, setDelPassword] = useState('')
+  const [delBusy, setDelBusy] = useState(false)
+  const [delError, setDelError] = useState(null)
+  useLockBodyScroll(open && !showTemplates && !showPassword)
+  useEscapeKey(onClose, open && !showTemplates && !showPassword)
   if (!open) {
     return null
   }
@@ -45,6 +51,24 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
     clearSession()
     onClose()
     navigate('/login', { replace: true })
+  }
+
+  const handleDeleteAccount = async () => {
+    if (delBusy || !delPassword) {
+      return
+    }
+    setDelBusy(true)
+    setDelError(null)
+    try {
+      await deleteAccount(delPassword)
+      clearSession()
+      onClose()
+      navigate('/', { replace: true })
+    } catch (error) {
+      setDelError(error.message || 'Silinmədi.')
+    } finally {
+      setDelBusy(false)
+    }
   }
 
   const handleTtlChange = (value) => {
@@ -245,10 +269,76 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
             Çıxış
           </button>
         </div>
+        <div className='mt-[10px] flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
+          <p className='truncate text-[14px] font-medium'>Şifrəni dəyişdir</p>
+          <button
+            type='button'
+            onClick={() => setShowPassword(true)}
+            className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
+          >
+            <FiLock aria-hidden='true' />
+            Dəyişdir
+          </button>
+        </div>
+        <div className='mt-[10px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
+          {!delConfirm ? (
+            <div className='flex items-center justify-between gap-[12px]'>
+              <p className='truncate text-[14px] font-medium'>Hesabı sil</p>
+              <button
+                type='button'
+                onClick={() => setDelConfirm(true)}
+                className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#FCE5E0] px-[12px] py-[8px] text-[13px] font-medium text-[#A65B46] hover:bg-[#F6D9D2]'
+              >
+                <FiTrash2 aria-hidden='true' />
+                Sil
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className='mb-[8px] text-[13px] text-[#777] dark:text-[#A8A29E]'>Şifrəni yaz, hesab və bütün məlumatlar silinsin.</p>
+              <input
+                type='password'
+                value={delPassword}
+                onChange={(event) => setDelPassword(event.target.value)}
+                placeholder='Şifrə'
+                autoComplete='current-password'
+                aria-label='Təsdiq üçün şifrə'
+                className='w-full rounded-[6px] border border-[#D8D5CE] bg-[#FFF] px-[10px] py-[8px] text-[13px] text-[#434140] outline-none focus:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#2A2724] dark:text-[#EDE8DF]'
+              />
+              <div className='mt-[8px] flex gap-[8px]'>
+                <button
+                  type='button'
+                  onClick={() => {
+                    setDelConfirm(false)
+                    setDelPassword('')
+                    setDelError(null)
+                  }}
+                  className='flex-1 rounded-[6px] border border-[#D8D5CE] py-[8px] text-[13px] font-medium text-[#434140] hover:bg-[#F7F3EC] dark:border-[#4A4440] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'
+                >
+                  Ləğv et
+                </button>
+                <button
+                  type='button'
+                  onClick={handleDeleteAccount}
+                  disabled={delBusy || !delPassword}
+                  className='flex-1 rounded-[6px] bg-[#A65B46] py-[8px] text-[13px] font-medium text-[#FFF] hover:bg-[#96503E] disabled:opacity-60'
+                >
+                  {delBusy ? 'Gözlə…' : 'Bəli, sil'}
+                </button>
+              </div>
+              {delError && (
+                <p className='mt-[8px] rounded-[6px] bg-[#FCE5E0] p-[8px] text-[13px] text-[#A65B46]'>{delError}</p>
+              )}
+            </>
+          )}
+        </div>
         </div>
       </div>
       {showTemplates && (
         <TemplatesModal open={showTemplates} onClose={() => setShowTemplates(false)} />
+      )}
+      {showPassword && (
+        <ChangePasswordModal open={showPassword} onClose={() => setShowPassword(false)} />
       )}
     </div>
   )

@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema({
     match: [/^\S+@\S+\.\S+$/, 'E-poçt yanlışdır.'],
   },
   passwordHash: { type: String, required: true },
+  resetTokenHash: { type: String, default: null },
+  resetTokenExpires: { type: Date, default: null },
 }, { timestamps: true })
 
 userSchema.set('toJSON', {
@@ -20,6 +22,8 @@ userSchema.set('toJSON', {
     ret.id = String(ret._id)
     delete ret._id
     delete ret.passwordHash
+    delete ret.resetTokenHash
+    delete ret.resetTokenExpires
   },
 })
 

@@ -57,6 +57,9 @@ const LoginPage = () => {
             className='w-full rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] p-[10px] text-[14px] text-[#333] outline-none focus:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B] dark:text-[#E8E2D9]'
           />
         </label>
+        <div className='text-right'>
+          <Link to='/forgot-password' className='text-[13px] font-medium text-[#A65B46] hover:underline'>Şifrəni unutmusan?</Link>
+        </div>
         <button
           type='submit'
           disabled={busy}
