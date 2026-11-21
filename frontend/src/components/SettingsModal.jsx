@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FiBell, FiCheck, FiClock, FiCopy, FiDownload, FiLayers, FiLock, FiLogOut, FiMoon, FiShare2, FiSun, FiTrash2, FiX } from 'react-icons/fi'
+import QRCode from 'react-qr-code'
 import { useNavigate } from 'react-router-dom'
 import { buildBackup, downloadBackup } from '../lib/backup'
 import { clearSession, getUser } from '../lib/auth'
@@ -362,15 +363,18 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
             </select>
           </div>
           {shareState?.ok && (
-            <button
-              type='button'
-              onClick={handleCopyCode}
-              title='Kopyalamaq üçün kliklə'
-              className='mt-[10px] flex w-full items-center justify-between rounded-[6px] bg-[#E3F1EC] px-[12px] py-[8px] text-[16px] font-bold tracking-[0.2em] text-[#477A68]'
-            >
-              {shareState.code}
-              {copied ? <FiCheck aria-hidden='true' /> : <FiCopy aria-hidden='true' />}
-            </button>
+            <div className='mt-[10px] flex flex-col items-center gap-[8px] rounded-[6px] bg-[#FFF] p-[12px]'>
+              <QRCode value={shareState.code} size={160} bgColor='#FFFFFF' fgColor='#434140' />
+              <button
+                type='button'
+                onClick={handleCopyCode}
+                title='Kopyalamaq üçün kliklə'
+                className='flex items-center gap-[6px] text-[14px] font-bold tracking-[0.2em] text-[#477A68]'
+              >
+                {shareState.code}
+                {copied ? <FiCheck aria-hidden='true' /> : <FiCopy aria-hidden='true' />}
+              </button>
+            </div>
           )}
           {shareState && !shareState.ok && (
             <p className='mt-[10px] rounded-[6px] bg-[#FCE5E0] p-[8px] text-[13px] text-[#A65B46]'>{shareState.message}</p>

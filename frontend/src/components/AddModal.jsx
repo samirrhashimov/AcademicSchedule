@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
-import { FiLayers, FiPlus, FiUpload, FiX } from 'react-icons/fi'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import { FiCamera, FiLayers, FiPlus, FiUpload, FiX } from 'react-icons/fi'
 import { fetchTemplate, fetchTemplatePreview, importSubjects, saveWeekState } from '../lib/api'
+const QrScanner = lazy(() => import('./QrScanner'))
 import { parseBackup } from '../lib/backup'
 import { normalizeSubject } from '../lib/subjects'
 import { useEscapeKey } from '../lib/useEscapeKey'
@@ -71,9 +72,9 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
     reader.readAsText(file)
   }
 
-  const handleCheckCode = async (event) => {
-    event.preventDefault()
-    const clean = code.trim().toUpperCase()
+  const handleCheckCode = async (event, explicitCode) => {
+    event?.preventDefault()
+    const clean = (explicitCode ?? code).trim().toUpperCase()
     if (!clean || busy) {
       return
     }
@@ -124,6 +125,26 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
     menuRefs.current[index]?.click()
   }
 
+  const parseScannedCode = (text) => {
+    const trimmed = String(text || '').trim()
+    try {
+      const param = new URL(trimmed).searchParams.get('template')
+      if (param) {
+        return param
+      }
+    } catch {
+      // düz kod, elə qaytar
+    }
+    return trimmed
+  }
+
+  const handleScanDetected = (text) => {
+    const clean = parseScannedCode(text)
+    setCode(clean.toUpperCase())
+    setStep('code')
+    handleCheckCode(null, clean)
+  }
+
   const handleConfirmLoad = async () => {
     if (!preview || busy) {
       return
@@ -153,7 +174,7 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
       <div onKeyDown={handleCardKeyDown} className='modal-card-in h-full w-full max-w-none overflow-y-auto rounded-none bg-[#FFF] p-[24px] text-[#333] shadow-xl sm:h-auto sm:max-w-[600px] sm:rounded-[14px] dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
         <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px] dark:border-[#4A4440]'>
           <h2 id='add-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>
-            {step === 'code' ? 'Şablon kodu' : 'Əlavə et'}
+            {step === 'menu' ? 'Əlavə et' : step === 'scan' ? 'Kodu skan et' : 'Şablon kodu'}
           </h2>
           <button
             type='button'
@@ -207,6 +228,10 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
               <span className='text-[12px] text-[#777] dark:text-[#A8A29E]'>Kodu yaz, hazır cədvəli yüklə</span>
             </button>
           </div>
+        ) : step === 'scan' ? (
+          <Suspense fallback={<p className='py-[20px] text-center text-[14px] text-[#777] dark:text-[#A8A29E]'>Gözlə…</p>}>
+            <QrScanner onDetected={handleScanDetected} onBack={() => setStep('code')} />
+          </Suspense>
         ) : preview ? (
           <div className='flex flex-col gap-[12px]'>
             <div className='rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
@@ -247,6 +272,14 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
                 className='w-full rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] p-[10px] text-center text-[18px] font-bold tracking-[0.2em] text-[#434140] outline-none focus:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B] dark:text-[#E8E2D9]'
               />
             </label>
+            <button
+              type='button'
+              onClick={() => setStep('scan')}
+              className='flex items-center justify-center gap-[6px] rounded-[8px] border border-[#D8D5CE] px-[12px] py-[10px] text-[14px] font-medium text-[#434140] hover:bg-[#F7F3EC] dark:border-[#4A4440] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'
+            >
+              <FiCamera aria-hidden='true' />
+              Skan et
+            </button>
             <div className='flex gap-[10px]'>
               <button
                 type='button'
