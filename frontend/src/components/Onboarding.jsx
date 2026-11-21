@@ -224,7 +224,7 @@ const Onboarding = ({ weekSystem, onWeekSystemChange, theme, onSelectTheme, onAd
               Xatırlatmalar
             </h1>
             <p className='mb-[16px] mt-[8px] text-[14px] text-[#777] dark:text-[#A8A29E]'>
-              Dərs başlamazdan əvvəl bildiriş al. Vaxtı ayarlardan dəyişə bilərsən.
+              Dərs başlamazdan əvvəl bildiriş al. Vaxtı tənzimləmələrdən dəyişə bilərsən.
             </p>
             {notifOn ? (
               <p className='rounded-[8px] bg-[#E3F1EC] p-[10px] text-[14px] text-[#477A68]'>Aktivdir.</p>
