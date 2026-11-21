@@ -38,6 +38,11 @@ export const dayContexts = (now) => [0, 1].map((offset) => {
   }
 })
 
+export const buildPushBody = (lessonDateKey, todayKey, startTime, type) => {
+  const when = lessonDateKey === todayKey ? startTime : `Sabah ${startTime}`
+  return `${when} • ${TYPE_LABELS[type]}`
+}
+
 export const minutesUntilLesson = (dayDate, startTime, now) => {
   const midnight = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate())
   const [hour, minute] = String(startTime).split(':').map(Number)
@@ -72,6 +77,7 @@ export const checkDueLessons = async (now = new Date()) => {
     return { checked: 0, pushed: 0 }
   }
   const contexts = dayContexts(now)
+  const todayKey = toDayKey(now)
   const users = await User.find({}, { _id: 1, notifyLead: 1 }).lean()
   let pushed = 0
   for (const user of users) {
@@ -113,12 +119,9 @@ export const checkDueLessons = async (now = new Date()) => {
               }
               throw error
             }
+            const body = buildPushBody(context.dateKey, todayKey, lesson.startTime, resolveLessonType(effective, sequenceIndex))
             try {
-              const recipients = await sendPush(
-                userId,
-                subject.name,
-                `${lesson.startTime} • ${TYPE_LABELS[resolveLessonType(effective, sequenceIndex)]}`,
-              )
+              const recipients = await sendPush(userId, subject.name, body)
               pushed += 1
               console.log(`Push göndərildi: ${subject.name} (${lesson.startTime}), alıcı: ${recipients}`)
               if (recipients === 0) {
