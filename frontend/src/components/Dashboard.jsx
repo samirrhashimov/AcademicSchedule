@@ -1176,6 +1176,10 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                     initialSubject={editingSubject}
                     weekSystem={weekSystem}
                     onClose={() => setEditingSubject(null)}
+                    onDelete={() => {
+                        setPendingDeleteSubject(editingSubject)
+                        setEditingSubject(null)
+                    }}
                     onSubmit={(updated) => {
                         onUpdateSubject(updated)
                         setEditingSubject(null)

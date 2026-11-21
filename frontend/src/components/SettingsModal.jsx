@@ -1,49 +1,25 @@
 import { useEffect, useState } from 'react'
-import { FiBell, FiCheck, FiClock, FiCopy, FiDownload, FiLayers, FiLock, FiLogOut, FiMoon, FiShare2, FiSun, FiTrash2, FiX } from 'react-icons/fi'
-import QRCode from 'react-qr-code'
+import { FiBell, FiDownload, FiLayers, FiLock, FiLogOut, FiMoon, FiShare2, FiSun, FiTrash2, FiX } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { buildBackup, downloadBackup } from '../lib/backup'
 import { clearSession, getUser } from '../lib/auth'
-import { createTemplate, deleteAccount, saveNotifyLead } from '../lib/api'
+import { saveNotifyLead } from '../lib/api'
 import { MAX_LEAD, MIN_LEAD, PRESET_LEADS, cleanLead, getLeadMinutes, isPresetLead, notificationsEnabled, setLeadMinutes, setNotificationsEnabled } from '../lib/notifications'
 import { isOneSignalConfigured, optInPush, optOutPush, unlinkPushUser } from '../lib/onesignal'
 import { isInstallAvailable, onInstallAvailable, promptInstall } from '../lib/pwa'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 import ChangePasswordModal from './ChangePasswordModal'
+import DeleteAccountModal from './DeleteAccountModal'
+import ShareTemplateModal from './ShareTemplateModal'
 import TemplatesModal from './TemplatesModal'
-
-const TTL_KEY = 'academic-schedule-template-ttl'
-const TTL_OPTIONS = [
-  { value: 3, label: '3 gün' },
-  { value: 7, label: '7 gün' },
-  { value: 30, label: '30 gün' },
-  { value: 90, label: '90 gün' },
-  { value: 0, label: 'Həmişəlik' },
-]
-
-const readTtl = () => {
-  try {
-    const saved = Number(localStorage.getItem(TTL_KEY))
-    return TTL_OPTIONS.some((option) => option.value === saved) ? saved : 7
-  } catch {
-    return 7
-  }
-}
 
 const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subjects, onWeekSystemChange, onClose }) => {
   const navigate = useNavigate()
-  const [shareState, setShareState] = useState(null)
-  const [shareBusy, setShareBusy] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [ttlDays, setTtlDays] = useState(readTtl)
-  const [shareName, setShareName] = useState('')
+  const [showShare, setShowShare] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [delConfirm, setDelConfirm] = useState(false)
-  const [delPassword, setDelPassword] = useState('')
-  const [delBusy, setDelBusy] = useState(false)
-  const [delError, setDelError] = useState(null)
+  const [showDelete, setShowDelete] = useState(false)
   const [notifOn, setNotifOn] = useState(notificationsEnabled)
   const [lead, setLead] = useState(getLeadMinutes)
   const [notifMsg, setNotifMsg] = useState(null)
@@ -54,8 +30,8 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
   })
   const [canInstall, setCanInstall] = useState(isInstallAvailable)
   useEffect(() => onInstallAvailable(setCanInstall), [])
-  useLockBodyScroll(open && !showTemplates && !showPassword)
-  useEscapeKey(onClose, open && !showTemplates && !showPassword)
+  useLockBodyScroll(open && !showTemplates && !showPassword && !showDelete && !showShare)
+  useEscapeKey(onClose, open && !showTemplates && !showPassword && !showDelete && !showShare)
   if (!open) {
     return null
   }
@@ -66,24 +42,6 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
     clearSession()
     onClose()
     navigate('/login', { replace: true })
-  }
-
-  const handleDeleteAccount = async () => {
-    if (delBusy || !delPassword) {
-      return
-    }
-    setDelBusy(true)
-    setDelError(null)
-    try {
-      await deleteAccount(delPassword)
-      clearSession()
-      onClose()
-      navigate('/', { replace: true })
-    } catch (error) {
-      setDelError(error.message || 'Silinmədi.')
-    } finally {
-      setDelBusy(false)
-    }
   }
 
   const handleNotifToggle = async () => {
@@ -134,46 +92,6 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
     setCustomOpen(false)
     setNotifMsg(null)
     handleLeadChange(cleaned)
-  }
-
-  const handleTtlChange = (value) => {
-    setTtlDays(value)
-    try {
-      localStorage.setItem(TTL_KEY, String(value))
-    } catch {
-      // yaddaş əlçatan deyilsə sessiya ilə qalır
-    }
-  }
-
-  const handleShare = async () => {
-    const name = shareName.trim()
-    if (shareBusy || subjects.length === 0 || !name) {
-      return
-    }
-    setShareBusy(true)
-    setShareState(null)
-    setCopied(false)
-    try {
-      const template = await createTemplate({ name, subjects, expiresInDays: ttlDays })
-      setShareState({ ok: true, code: template.code })
-    } catch (error) {
-      setShareState({ ok: false, message: error.message || 'Paylaşma alınmadı.' })
-    } finally {
-      setShareBusy(false)
-    }
-  }
-
-  const handleCopyCode = async () => {
-    if (!shareState?.code) {
-      return
-    }
-    try {
-      await navigator.clipboard.writeText(shareState.code)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
-    } catch {
-      setCopied(false)
-    }
   }
 
   return (
@@ -318,67 +236,17 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
             Xaric et
           </button>
         </div>
-        <div className='mb-[16px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
-          <div className='flex items-center justify-between gap-[12px]'>
-            <div className='min-w-0'>
-              <p className='truncate text-[14px] font-medium'>Şablon kimi paylaş</p>
-            </div>
-            <button
-              type='button'
-              onClick={handleShare}
-              disabled={shareBusy || subjects.length === 0 || !shareName.trim()}
-              className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] disabled:opacity-60 dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
-            >
-              <FiShare2 aria-hidden='true' />
-              {shareBusy ? 'Gözlə…' : 'Paylaş'}
-            </button>
-          </div>
-          <input
-            type='text'
-            required
-            value={shareName}
-            onChange={(event) => setShareName(event.target.value)}
-            placeholder='Şablon adı'
-            maxLength={80}
-            aria-label='Şablon adı'
-            className='mt-[10px] w-full rounded-[6px] border border-[#D8D5CE] bg-[#FFF] px-[10px] py-[8px] text-[13px] text-[#434140] outline-none focus:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#2A2724] dark:text-[#EDE8DF]'
-          />
-          <div className='mt-[10px] flex items-center justify-between gap-[12px]'>
-            <label htmlFor='template-ttl' className='flex items-center gap-[4px] truncate text-[12px] text-[#777] dark:text-[#A8A29E]'>
-              <FiClock aria-hidden='true' />
-              Saxlama müddəti
-            </label>
-            <select
-              id='template-ttl'
-              value={ttlDays}
-              onChange={(event) => handleTtlChange(Number(event.target.value))}
-              title='Şablon nə qədər saxlanılsın'
-              className='min-w-[96px] shrink-0 rounded-[6px] border border-[#D8D5CE] bg-[#FFF] px-[8px] py-[6px] text-center text-[12px] font-medium text-[#434140] hover:bg-[#F7F3EC] dark:border-[#4A4440] dark:bg-[#2A2724] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'
-            >
-              {TTL_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          {shareState?.ok && (
-            <div className='mt-[10px] flex flex-col items-center gap-[8px] rounded-[6px] bg-[#FFF] p-[12px]'>
-              <QRCode value={shareState.code} size={160} bgColor='#FFFFFF' fgColor='#434140' />
-              <button
-                type='button'
-                onClick={handleCopyCode}
-                title='Kopyalamaq üçün kliklə'
-                className='flex items-center gap-[6px] text-[14px] font-bold tracking-[0.2em] text-[#477A68]'
-              >
-                {shareState.code}
-                {copied ? <FiCheck aria-hidden='true' /> : <FiCopy aria-hidden='true' />}
-              </button>
-            </div>
-          )}
-          {shareState && !shareState.ok && (
-            <p className='mt-[10px] rounded-[6px] bg-[#FCE5E0] p-[8px] text-[13px] text-[#A65B46]'>{shareState.message}</p>
-          )}
+        <div className='mb-[16px] flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
+          <p className='truncate text-[14px] font-medium'>Şablon kimi paylaş</p>
+          <button
+            type='button'
+            onClick={() => setShowShare(true)}
+            disabled={subjects.length === 0}
+            className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] disabled:opacity-60 dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
+          >
+            <FiShare2 aria-hidden='true' />
+            Paylaş
+          </button>
         </div>
         <div className='mb-[16px] flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
           <div className='min-w-0'>
@@ -402,7 +270,7 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
           <button
             type='button'
             onClick={handleLogout}
-            className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#FCE5E0] px-[12px] py-[8px] text-[13px] font-medium text-[#A65B46] hover:bg-[#F6D9D2]'
+            className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
           >
             <FiLogOut aria-hidden='true' />
             Çıxış
@@ -419,57 +287,16 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
             Dəyişdir
           </button>
         </div>
-        <div className='mt-[10px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
-          {!delConfirm ? (
-            <div className='flex items-center justify-between gap-[12px]'>
-              <p className='truncate text-[14px] font-medium'>Hesabı sil</p>
-              <button
-                type='button'
-                onClick={() => setDelConfirm(true)}
-                className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#FCE5E0] px-[12px] py-[8px] text-[13px] font-medium text-[#A65B46] hover:bg-[#F6D9D2]'
-              >
-                <FiTrash2 aria-hidden='true' />
-                Sil
-              </button>
-            </div>
-          ) : (
-            <>
-              <p className='mb-[8px] text-[13px] text-[#777] dark:text-[#A8A29E]'>Şifrəni yaz, hesab və bütün məlumatlar silinsin.</p>
-              <input
-                type='password'
-                value={delPassword}
-                onChange={(event) => setDelPassword(event.target.value)}
-                placeholder='Şifrə'
-                autoComplete='current-password'
-                aria-label='Təsdiq üçün şifrə'
-                className='w-full rounded-[6px] border border-[#D8D5CE] bg-[#FFF] px-[10px] py-[8px] text-[13px] text-[#434140] outline-none focus:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#2A2724] dark:text-[#EDE8DF]'
-              />
-              <div className='mt-[8px] flex gap-[8px]'>
-                <button
-                  type='button'
-                  onClick={() => {
-                    setDelConfirm(false)
-                    setDelPassword('')
-                    setDelError(null)
-                  }}
-                  className='flex-1 rounded-[6px] border border-[#D8D5CE] py-[8px] text-[13px] font-medium text-[#434140] hover:bg-[#F7F3EC] dark:border-[#4A4440] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'
-                >
-                  Ləğv et
-                </button>
-                <button
-                  type='button'
-                  onClick={handleDeleteAccount}
-                  disabled={delBusy || !delPassword}
-                  className='flex-1 rounded-[6px] bg-[#A65B46] py-[8px] text-[13px] font-medium text-[#FFF] hover:bg-[#96503E] disabled:opacity-60'
-                >
-                  {delBusy ? 'Gözlə…' : 'Bəli, sil'}
-                </button>
-              </div>
-              {delError && (
-                <p className='mt-[8px] rounded-[6px] bg-[#FCE5E0] p-[8px] text-[13px] text-[#A65B46]'>{delError}</p>
-              )}
-            </>
-          )}
+        <div className='mt-[10px] flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
+          <p className='truncate text-[14px] font-medium'>Hesabı sil</p>
+          <button
+            type='button'
+            onClick={() => setShowDelete(true)}
+            className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#FCE5E0] px-[12px] py-[8px] text-[13px] font-medium text-[#A65B46] hover:bg-[#F6D9D2]'
+          >
+            <FiTrash2 aria-hidden='true' />
+            Sil
+          </button>
         </div>
         </div>
       </div>
@@ -478,6 +305,12 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
       )}
       {showPassword && (
         <ChangePasswordModal open={showPassword} onClose={() => setShowPassword(false)} />
+      )}
+      {showDelete && (
+        <DeleteAccountModal open={showDelete} onClose={() => setShowDelete(false)} />
+      )}
+      {showShare && (
+        <ShareTemplateModal open={showShare} onClose={() => setShowShare(false)} subjects={subjects} />
       )}
     </div>
   )

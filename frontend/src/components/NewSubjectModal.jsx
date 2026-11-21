@@ -38,7 +38,7 @@ const buildDayDetails = (schedule = []) => {
   return details
 }
 
-const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = false, preset = null, weekSystem = 'double' }) => {
+const NewSubjectModal = ({ onClose, onSubmit, onDelete = null, initialSubject = null, copyMode = false, preset = null, weekSystem = 'double' }) => {
   const isCopyMode = Boolean(copyMode)
   const isEditMode = Boolean(initialSubject) && !isCopyMode
   const showFrequency = weekSystem !== 'single'
@@ -317,6 +317,15 @@ const NewSubjectModal = ({ onClose, onSubmit, initialSubject = null, copyMode = 
         >
           {submitLabel}
         </button>
+        {isEditMode && onDelete && (
+          <button
+            type='button'
+            onClick={onDelete}
+            className='mt-[10px] w-full rounded-[8px] py-[12px] text-[14px] text-[#A65B46] hover:bg-[#FCE5E0] dark:hover:bg-[#473431]'
+          >
+            Fənni sil
+          </button>
+        )}
         </div>
       </form>
     </div>
