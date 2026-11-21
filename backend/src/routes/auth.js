@@ -157,13 +157,18 @@ router.put('/password', authLimiter, requireAuth, async (req, res, next) => {
   }
 })
 
-const LEAD_OPTIONS = [5, 10, 15, 30]
+const MIN_LEAD = 5
+const MAX_LEAD = 1440
+
+const cleanLead = (value) => {
+  const lead = Number(value)
+  return Number.isInteger(lead) && lead >= MIN_LEAD && lead <= MAX_LEAD ? lead : null
+}
 
 router.get('/notify-lead', authLimiter, requireAuth, async (req, res, next) => {
   try {
     const user = await User.findById(req.userId).lean()
-    const lead = Number(user?.notifyLead)
-    res.json({ notifyLead: LEAD_OPTIONS.includes(lead) ? lead : 10 })
+    res.json({ notifyLead: cleanLead(user?.notifyLead) ?? 30 })
   } catch (error) {
     next(error)
   }
@@ -171,9 +176,9 @@ router.get('/notify-lead', authLimiter, requireAuth, async (req, res, next) => {
 
 router.put('/notify-lead', authLimiter, requireAuth, async (req, res, next) => {
   try {
-    const lead = Number(req.body?.lead)
-    if (!LEAD_OPTIONS.includes(lead)) {
-      return res.status(400).json({ error: 'Vaxt yanlışdır.' })
+    const lead = cleanLead(req.body?.lead)
+    if (lead === null) {
+      return res.status(400).json({ error: 'Vaxt 5 dəqiqə ilə 24 saat arasında olmalıdır.' })
     }
     await User.updateOne({ _id: req.userId }, { notifyLead: lead })
     res.json({ notifyLead: lead })

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { buildBackup, downloadBackup } from '../lib/backup'
 import { clearSession, getUser } from '../lib/auth'
 import { createTemplate, deleteAccount, saveNotifyLead } from '../lib/api'
-import { LEAD_OPTIONS, getLeadMinutes, notificationsEnabled, setLeadMinutes, setNotificationsEnabled } from '../lib/notifications'
+import { MAX_LEAD, MIN_LEAD, PRESET_LEADS, cleanLead, getLeadMinutes, isPresetLead, notificationsEnabled, setLeadMinutes, setNotificationsEnabled } from '../lib/notifications'
 import { isOneSignalConfigured, optInPush, optOutPush, unlinkPushUser } from '../lib/onesignal'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
@@ -45,6 +45,11 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
   const [notifOn, setNotifOn] = useState(notificationsEnabled)
   const [lead, setLead] = useState(getLeadMinutes)
   const [notifMsg, setNotifMsg] = useState(null)
+  const [customOpen, setCustomOpen] = useState(false)
+  const [customLead, setCustomLead] = useState(() => {
+    const stored = getLeadMinutes()
+    return isPresetLead(stored) ? '' : String(stored)
+  })
   useLockBodyScroll(open && !showTemplates && !showPassword)
   useEscapeKey(onClose, open && !showTemplates && !showPassword)
   if (!open) {
@@ -103,6 +108,28 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
     setLeadMinutes(value)
     setLead(value)
     saveNotifyLead(value).catch(() => {})
+  }
+
+  const handleLeadSelect = (value) => {
+    if (value === 'custom') {
+      setCustomLead(isPresetLead(lead) ? '' : String(lead))
+      setCustomOpen(true)
+      return
+    }
+    setCustomOpen(false)
+    setNotifMsg(null)
+    handleLeadChange(Number(value))
+  }
+
+  const handleCustomApply = () => {
+    const cleaned = cleanLead(customLead)
+    if (cleaned === null) {
+      setNotifMsg(`Dəqiqə ${MIN_LEAD} ilə ${MAX_LEAD} arasında olmalıdır.`)
+      return
+    }
+    setCustomOpen(false)
+    setNotifMsg(null)
+    handleLeadChange(cleaned)
   }
 
   const handleTtlChange = (value) => {
@@ -214,18 +241,47 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
             {notifOn ? 'Aktiv' : 'Deaktiv'}
           </button>
         </div>
-        <div className='mb-[10px] flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
-          <p className='truncate text-[14px] font-medium'>Xəbərdarlıq vaxtı</p>
-          <select
-            value={lead}
-            onChange={(event) => handleLeadChange(Number(event.target.value))}
-            aria-label='Xəbərdarlıq vaxtı'
-            className='min-w-[96px] shrink-0 rounded-[6px] border border-[#D8D5CE] bg-[#FFF] px-[8px] py-[6px] text-center text-[12px] font-medium text-[#434140] hover:bg-[#F7F3EC] dark:border-[#4A4440] dark:bg-[#2A2724] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'
-          >
-            {LEAD_OPTIONS.map((minutes) => (
-              <option key={minutes} value={minutes}>{minutes} dəq</option>
-            ))}
-          </select>
+        <div className='mb-[10px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
+          <div className='flex items-center justify-between gap-[12px]'>
+            <p className='truncate text-[14px] font-medium'>Xəbərdarlıq vaxtı</p>
+            <select
+              value={isPresetLead(lead) && !customOpen ? lead : 'custom'}
+              onChange={(event) => handleLeadSelect(event.target.value)}
+              aria-label='Xəbərdarlıq vaxtı'
+              className='min-w-[96px] shrink-0 rounded-[6px] border border-[#D8D5CE] bg-[#FFF] px-[8px] py-[6px] text-center text-[12px] font-medium text-[#434140] hover:bg-[#F7F3EC] dark:border-[#4A4440] dark:bg-[#2A2724] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'
+            >
+              {PRESET_LEADS.map((preset) => (
+                <option key={preset.value} value={preset.value}>{preset.label}</option>
+              ))}
+              <option value='custom'>Xüsusi…</option>
+            </select>
+          </div>
+          {(customOpen || !isPresetLead(lead)) && (
+            <div className='mt-[8px] flex gap-[8px]'>
+              <input
+                type='number'
+                min={MIN_LEAD}
+                max={MAX_LEAD}
+                value={customLead}
+                onChange={(event) => setCustomLead(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    handleCustomApply()
+                  }
+                }}
+                placeholder={`Dəqiqə (${MIN_LEAD}-${MAX_LEAD})`}
+                aria-label='Xüsusi dəqiqə'
+                className='w-full rounded-[6px] border border-[#D8D5CE] bg-[#FFF] px-[10px] py-[6px] text-[13px] text-[#434140] outline-none focus:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#2A2724] dark:text-[#EDE8DF]'
+              />
+              <button
+                type='button'
+                onClick={handleCustomApply}
+                className='shrink-0 rounded-[6px] bg-[#434140] px-[12px] py-[6px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
+              >
+                OK
+              </button>
+            </div>
+          )}
         </div>
         {notifMsg && (
           <p className='mb-[10px] rounded-[6px] bg-[#FCE5E0] p-[8px] text-[13px] text-[#A65B46]'>{notifMsg}</p>
