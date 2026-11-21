@@ -16,10 +16,7 @@ import TemplatesModal from './TemplatesModal'
 
 const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subjects, onWeekSystemChange, onClose }) => {
   const navigate = useNavigate()
-  const [showShare, setShowShare] = useState(false)
-  const [showTemplates, setShowTemplates] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showDelete, setShowDelete] = useState(false)
+  const [view, setView] = useState('root')
   const [notifOn, setNotifOn] = useState(notificationsEnabled)
   const [lead, setLead] = useState(getLeadMinutes)
   const [notifMsg, setNotifMsg] = useState(null)
@@ -30,10 +27,22 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
   })
   const [canInstall, setCanInstall] = useState(isInstallAvailable)
   useEffect(() => onInstallAvailable(setCanInstall), [])
-  useLockBodyScroll(open && !showTemplates && !showPassword && !showDelete && !showShare)
-  useEscapeKey(onClose, open && !showTemplates && !showPassword && !showDelete && !showShare)
+  useLockBodyScroll(open)
+  useEscapeKey(onClose, open && view === 'root')
   if (!open) {
     return null
+  }
+  if (view === 'templates') {
+    return <TemplatesModal open onClose={() => setView('root')} />
+  }
+  if (view === 'password') {
+    return <ChangePasswordModal open onClose={() => setView('root')} />
+  }
+  if (view === 'delete') {
+    return <DeleteAccountModal open onClose={() => setView('root')} />
+  }
+  if (view === 'share') {
+    return <ShareTemplateModal open onClose={() => setView('root')} subjects={subjects} />
   }
 
   const user = getUser()
@@ -240,7 +249,7 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
           <p className='truncate text-[14px] font-medium'>Şablon kimi paylaş</p>
           <button
             type='button'
-            onClick={() => setShowShare(true)}
+            onClick={() => setView('share')}
             disabled={subjects.length === 0}
             className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] disabled:opacity-60 dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
           >
@@ -254,7 +263,7 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
           </div>
           <button
             type='button'
-            onClick={() => setShowTemplates(true)}
+            onClick={() => setView('templates')}
             className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
           >
             <FiLayers aria-hidden='true' />
@@ -280,7 +289,7 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
           <p className='truncate text-[14px] font-medium'>Şifrəni dəyişdir</p>
           <button
             type='button'
-            onClick={() => setShowPassword(true)}
+            onClick={() => setView('password')}
             className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
           >
             <FiLock aria-hidden='true' />
@@ -291,7 +300,7 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
           <p className='truncate text-[14px] font-medium'>Hesabı sil</p>
           <button
             type='button'
-            onClick={() => setShowDelete(true)}
+            onClick={() => setView('delete')}
             className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#FCE5E0] px-[12px] py-[8px] text-[13px] font-medium text-[#A65B46] hover:bg-[#F6D9D2]'
           >
             <FiTrash2 aria-hidden='true' />
@@ -300,18 +309,6 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
         </div>
         </div>
       </div>
-      {showTemplates && (
-        <TemplatesModal open={showTemplates} onClose={() => setShowTemplates(false)} />
-      )}
-      {showPassword && (
-        <ChangePasswordModal open={showPassword} onClose={() => setShowPassword(false)} />
-      )}
-      {showDelete && (
-        <DeleteAccountModal open={showDelete} onClose={() => setShowDelete(false)} />
-      )}
-      {showShare && (
-        <ShareTemplateModal open={showShare} onClose={() => setShowShare(false)} subjects={subjects} />
-      )}
     </div>
   )
 }

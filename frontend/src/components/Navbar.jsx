@@ -135,7 +135,10 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
       {isModalOpen && (
         <NewSubjectModal
           weekSystem={weekSystem}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false)
+            setIsAddMenuOpen(true)
+          }}
           onSubmit={(subject) => {
             onAddSubject(subject)
             setIsModalOpen(false)
