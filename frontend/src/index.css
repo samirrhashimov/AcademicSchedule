@@ -124,6 +124,11 @@ button {
   transition-timing-function: ease;
 }
 
+/* Sidebar açma düyməsi hər hansı modal açıq olanda gizlənir */
+body:has([role="dialog"]) .sidebar-reopen {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

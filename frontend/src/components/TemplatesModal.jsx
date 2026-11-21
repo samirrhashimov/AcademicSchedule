@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiCheck, FiCopy, FiTrash2, FiX } from 'react-icons/fi'
+import { FiArrowLeft, FiCheck, FiCopy, FiTrash2, FiX } from 'react-icons/fi'
 import { deleteTemplate, fetchMyTemplates } from '../lib/api'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
@@ -79,7 +79,18 @@ const TemplatesModal = ({ open, onClose }) => {
     >
       <div className='modal-card-in h-full w-full max-w-none overflow-y-auto rounded-none bg-[#FFF] p-[24px] text-[#333] shadow-xl sm:h-auto sm:max-w-[480px] sm:rounded-[14px] dark:bg-[#2A2724] dark:text-[#E8E2D9]'>
         <div className='mb-[16px] flex items-center justify-between border-b border-[#EEE] pb-[16px] dark:border-[#4A4440]'>
-          <h2 id='templates-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Şablonlarım</h2>
+          <div className='flex items-center gap-[10px]'>
+            <button
+              type='button'
+              onClick={onClose}
+              aria-label='Geri'
+              title='Geri'
+              className='flex h-[32px] w-[32px] items-center justify-center rounded-full text-[20px] text-[#434140] hover:bg-[#F1EFE9] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+            >
+              <FiArrowLeft aria-hidden='true' />
+            </button>
+            <h2 id='templates-title' className='text-[20px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Şablonlarım</h2>
+          </div>
           <button
             type='button'
             onClick={onClose}

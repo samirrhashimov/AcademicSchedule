@@ -885,7 +885,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                             onClick={toggleSidebar}
                             aria-label='Fənlərim panelini aç'
                             title='Fənlərim'
-                            className='no-print fixed left-0 top-1/2 z-10 -translate-y-1/2 rounded-r-[8px] bg-[#434140] px-[8px] py-[14px] text-[18px] text-[#E7D8C6] shadow-md hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
+                            className='sidebar-reopen no-print fixed left-0 top-1/2 z-10 -translate-y-1/2 rounded-r-[8px] bg-[#434140] px-[8px] py-[14px] text-[18px] text-[#E7D8C6] shadow-md hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
                         >
                             <FiChevronsRight aria-hidden='true' />
                         </button>
