@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { FiCamera, FiLayers, FiPlus, FiUpload, FiX } from 'react-icons/fi'
 import { fetchTemplate, fetchTemplatePreview, importSubjects, saveWeekState } from '../lib/api'
+import { parseScannedCode } from '../lib/templateCode'
 const QrScanner = lazy(() => import('./QrScanner'))
 import { parseBackup } from '../lib/backup'
 import { normalizeSubject } from '../lib/subjects'
@@ -123,19 +124,6 @@ const AddModal = ({ open, onClose, onSelectNew }) => {
     }
     event.preventDefault()
     menuRefs.current[index]?.click()
-  }
-
-  const parseScannedCode = (text) => {
-    const trimmed = String(text || '').trim()
-    try {
-      const param = new URL(trimmed).searchParams.get('template')
-      if (param) {
-        return param
-      }
-    } catch {
-      // düz kod, elə qaytar
-    }
-    return trimmed
   }
 
   const handleScanDetected = (text) => {

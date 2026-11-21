@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
 import Navbar from './components/Navbar'
 import Dashboard from './components/Dashboard'
+import Onboarding from './components/Onboarding'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
@@ -73,6 +74,15 @@ const readLegacyWeekState = (monday) => {
 }
 
 const THEME_KEY = 'academic-schedule-theme'
+const ONBOARDING_KEY = 'academic-schedule-onboarding-done'
+
+const readOnboardingDone = () => {
+  try {
+    return localStorage.getItem(ONBOARDING_KEY) === '1'
+  } catch {
+    return false
+  }
+}
 
 const getInitialTheme = () => {
   try {
@@ -91,6 +101,7 @@ function ScheduleApp() {
   const [jump, setJump] = useState(null)
   const [theme, setTheme] = useState(getInitialTheme)
   const [isDayInfoOpen, setIsDayInfoOpen] = useState(false)
+  const [onboardingActive, setOnboardingActive] = useState(false)
   const [weekState, setWeekState] = useState(() => {
     const monday = mondayOfWeek(new Date())
     return defaultWeekState(monday, getWeekNumber(monday) % 2 === 0 ? 'upper-week' : 'lower-week')
@@ -122,12 +133,15 @@ function ScheduleApp() {
             }
           })
           .filter(Boolean)
+        let finalCount = valid.length
         if (valid.length === 0) {
           const legacy = readLegacySubjects()
           if (legacy.length > 0) {
             const imported = await apiImportSubjects(legacy)
             localStorage.removeItem(LEGACY_SUBJECTS_KEY)
-            setSubjects(imported.map((subject) => normalizeSubject(subject)))
+            const fresh = imported.map((subject) => normalizeSubject(subject))
+            finalCount = fresh.length
+            setSubjects(fresh)
           } else {
             setSubjects([])
           }
@@ -153,6 +167,9 @@ function ScheduleApp() {
           if (!cancelled) {
             setWeekState(migrated)
           }
+        }
+        if (!cancelled && finalCount === 0 && !readOnboardingDone()) {
+          setOnboardingActive(true)
         }
       } catch (err) {
         if (!cancelled) {
@@ -232,6 +249,25 @@ function ScheduleApp() {
     }
   }
 
+  const importBulkSubjects = async (rawSubjects) => {
+    const imported = await apiImportSubjects(rawSubjects)
+    const fresh = imported.map((subject) => normalizeSubject(subject))
+    setSubjects((currentSubjects) => [...currentSubjects, ...fresh])
+  }
+
+  const markOnboardingSeen = () => {
+    try {
+      localStorage.setItem(ONBOARDING_KEY, '1')
+    } catch {
+      // yaddaş əlçatan deyilsə növbəti açılışda yenə göstərilir
+    }
+  }
+
+  const finishOnboarding = () => {
+    markOnboardingSeen()
+    setOnboardingActive(false)
+  }
+
   const updateSubject = async (updatedSubject) => {
     try {
       const normalized = normalizeSubject(updatedSubject)
@@ -287,6 +323,21 @@ function ScheduleApp() {
       <div className='flex min-h-screen items-center justify-center'>
         <p className='text-[15px] text-[#777] dark:text-[#A8A29E]'>Yüklənir…</p>
       </div>
+    )
+  }
+
+  if (onboardingActive) {
+    return (
+      <Onboarding
+        weekSystem={weekState.system}
+        onWeekSystemChange={(system) => handleWeekStateChange((current) => ({ ...current, system }))}
+        theme={theme}
+        onSelectTheme={setTheme}
+        onAddSubject={addSubject}
+        onBulkImport={importBulkSubjects}
+        onMarkSeen={markOnboardingSeen}
+        onDone={finishOnboarding}
+      />
     )
   }
 
