@@ -4,6 +4,7 @@ import AuthLayout from '../components/AuthLayout'
 import ScheduleIllustration from '../components/illustrations/ScheduleIllustration'
 import { register } from '../lib/api'
 import { saveSession } from '../lib/auth'
+import { linkPushUser } from '../lib/onesignal'
 
 const inputClass = 'w-full rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] p-[10px] text-[14px] text-[#333] outline-none focus:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B] dark:text-[#E8E2D9]'
 const labelClass = 'mb-[6px] block text-[13px] font-semibold text-[#434140] dark:text-[#EDE8DF]'
@@ -32,6 +33,7 @@ const RegisterPage = () => {
         password,
       })
       saveSession(session)
+      linkPushUser(session?.user?.id)
       navigate('/app', { replace: true })
     } catch (err) {
       setError(err.message || 'Qeydiyyat alınmadı.')

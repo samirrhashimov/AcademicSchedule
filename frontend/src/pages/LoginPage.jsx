@@ -4,6 +4,7 @@ import AuthLayout from '../components/AuthLayout'
 import StudyIllustration from '../components/illustrations/StudyIllustration'
 import { login } from '../lib/api'
 import { saveSession } from '../lib/auth'
+import { linkPushUser } from '../lib/onesignal'
 
 const LoginPage = () => {
   const navigate = useNavigate()
@@ -19,6 +20,7 @@ const LoginPage = () => {
     try {
       const session = await login({ email: email.trim(), password })
       saveSession(session)
+      linkPushUser(session?.user?.id)
       navigate('/app', { replace: true })
     } catch (err) {
       setError(err.message || 'Giriş alınmadı.')

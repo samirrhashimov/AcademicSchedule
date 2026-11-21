@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { FiCheck, FiClock, FiCopy, FiDownload, FiLayers, FiLock, FiLogOut, FiMoon, FiShare2, FiSun, FiTrash2, FiX } from 'react-icons/fi'
+import { FiBell, FiCheck, FiClock, FiCopy, FiDownload, FiLayers, FiLock, FiLogOut, FiMoon, FiShare2, FiSun, FiTrash2, FiX } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { buildBackup, downloadBackup } from '../lib/backup'
 import { clearSession, getUser } from '../lib/auth'
-import { createTemplate, deleteAccount } from '../lib/api'
+import { createTemplate, deleteAccount, saveNotifyLead } from '../lib/api'
+import { LEAD_OPTIONS, getLeadMinutes, notificationsEnabled, setLeadMinutes, setNotificationsEnabled } from '../lib/notifications'
+import { isOneSignalConfigured, optInPush, optOutPush, unlinkPushUser } from '../lib/onesignal'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 import ChangePasswordModal from './ChangePasswordModal'
@@ -40,6 +42,9 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
   const [delPassword, setDelPassword] = useState('')
   const [delBusy, setDelBusy] = useState(false)
   const [delError, setDelError] = useState(null)
+  const [notifOn, setNotifOn] = useState(notificationsEnabled)
+  const [lead, setLead] = useState(getLeadMinutes)
+  const [notifMsg, setNotifMsg] = useState(null)
   useLockBodyScroll(open && !showTemplates && !showPassword)
   useEscapeKey(onClose, open && !showTemplates && !showPassword)
   if (!open) {
@@ -48,6 +53,7 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
 
   const user = getUser()
   const handleLogout = () => {
+    unlinkPushUser()
     clearSession()
     onClose()
     navigate('/login', { replace: true })
@@ -69,6 +75,34 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
     } finally {
       setDelBusy(false)
     }
+  }
+
+  const handleNotifToggle = async () => {
+    if (notifOn) {
+      setNotificationsEnabled(false)
+      setNotifOn(false)
+      setNotifMsg(null)
+      optOutPush()
+      return
+    }
+    if (!isOneSignalConfigured()) {
+      setNotifMsg('Push bildiriş sazlanmayıb.')
+      return
+    }
+    const ok = await optInPush()
+    if (ok) {
+      setNotificationsEnabled(true)
+      setNotifOn(true)
+      setNotifMsg(null)
+    } else {
+      setNotifMsg('Brauzer ayarlarından bildirişə icazə ver.')
+    }
+  }
+
+  const handleLeadChange = (value) => {
+    setLeadMinutes(value)
+    setLead(value)
+    saveNotifyLead(value).catch(() => {})
   }
 
   const handleTtlChange = (value) => {
@@ -167,6 +201,35 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
             </button>
           ))}
         </div>
+        <p className='mb-[10px] text-[14px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Bildirişlər</p>
+        <div className='mb-[10px] flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
+          <p className='truncate text-[14px] font-medium'>Dərs xatırlatması</p>
+          <button
+            type='button'
+            onClick={handleNotifToggle}
+            aria-pressed={notifOn}
+            className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
+          >
+            <FiBell aria-hidden='true' />
+            {notifOn ? 'Aktiv' : 'Deaktiv'}
+          </button>
+        </div>
+        <div className='mb-[10px] flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
+          <p className='truncate text-[14px] font-medium'>Xəbərdarlıq vaxtı</p>
+          <select
+            value={lead}
+            onChange={(event) => handleLeadChange(Number(event.target.value))}
+            aria-label='Xəbərdarlıq vaxtı'
+            className='min-w-[96px] shrink-0 rounded-[6px] border border-[#D8D5CE] bg-[#FFF] px-[8px] py-[6px] text-center text-[12px] font-medium text-[#434140] hover:bg-[#F7F3EC] dark:border-[#4A4440] dark:bg-[#2A2724] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'
+          >
+            {LEAD_OPTIONS.map((minutes) => (
+              <option key={minutes} value={minutes}>{minutes} dəq</option>
+            ))}
+          </select>
+        </div>
+        {notifMsg && (
+          <p className='mb-[10px] rounded-[6px] bg-[#FCE5E0] p-[8px] text-[13px] text-[#A65B46]'>{notifMsg}</p>
+        )}
         <p className='mb-[10px] text-[14px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Məlumat</p>
         <div className='mb-[10px] flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
           <div className='min-w-0'>

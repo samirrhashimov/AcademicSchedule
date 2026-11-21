@@ -17,6 +17,7 @@ import {
 import {
   createSubject as apiCreateSubject,
   deleteSubject as apiDeleteSubject,
+  fetchNotifyLead as apiFetchNotifyLead,
   fetchSubjects as apiFetchSubjects,
   fetchWeekState as apiFetchWeekState,
   importSubjects as apiImportSubjects,
@@ -24,6 +25,8 @@ import {
   updateSubject as apiUpdateSubject,
 } from './lib/api'
 import { defaultWeekState, getWeekNumber, mondayOfWeek, normalizeWeekState } from './lib/weeks'
+import { initOneSignal } from './lib/onesignal'
+import { setLeadMinutes } from './lib/notifications'
 
 // Köhnə localStorage açarları — yalnız ilk açılışda MongoDB-yə köçürmək üçün oxunur.
 const LEGACY_SUBJECTS_KEY = 'academic-schedule-subjects'
@@ -166,6 +169,12 @@ function ScheduleApp() {
     return () => {
       cancelled = true
     }
+  }, [])
+
+  useEffect(() => {
+    apiFetchNotifyLead()
+      .then(({ notifyLead }) => setLeadMinutes(notifyLead))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -320,6 +329,9 @@ const RequireAuth = ({ children }) => (getToken() ? children : <Navigate to='/lo
 const RequireGuest = ({ children }) => (getToken() ? <Navigate to='/app' replace /> : children)
 
 function App() {
+  useEffect(() => {
+    initOneSignal()
+  }, [])
   return (
     <BrowserRouter>
       <Routes>

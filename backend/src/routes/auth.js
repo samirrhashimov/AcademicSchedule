@@ -157,6 +157,31 @@ router.put('/password', authLimiter, requireAuth, async (req, res, next) => {
   }
 })
 
+const LEAD_OPTIONS = [5, 10, 15, 30]
+
+router.get('/notify-lead', authLimiter, requireAuth, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId).lean()
+    const lead = Number(user?.notifyLead)
+    res.json({ notifyLead: LEAD_OPTIONS.includes(lead) ? lead : 10 })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.put('/notify-lead', authLimiter, requireAuth, async (req, res, next) => {
+  try {
+    const lead = Number(req.body?.lead)
+    if (!LEAD_OPTIONS.includes(lead)) {
+      return res.status(400).json({ error: 'Vaxt yanlışdır.' })
+    }
+    await User.updateOne({ _id: req.userId }, { notifyLead: lead })
+    res.json({ notifyLead: lead })
+  } catch (error) {
+    next(error)
+  }
+})
+
 router.delete('/me', authLimiter, requireAuth, async (req, res, next) => {
   try {
     const password = String(req.body?.password || '')

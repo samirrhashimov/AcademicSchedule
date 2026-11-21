@@ -6,6 +6,7 @@ import authRouter from './routes/auth.js'
 import subjectsRouter from './routes/subjects.js'
 import templatesRouter from './routes/templates.js'
 import weekStateRouter from './routes/weekState.js'
+import { startPushScheduler } from './lib/push.js'
 
 if (!process.env.JWT_SECRET) {
   console.error('JWT_SECRET təyin edilməyib (backend/.env faylına bax).')
@@ -40,6 +41,7 @@ connectDb()
     app.listen(PORT, () => {
       console.log(`API ${PORT} portunda işləyir, DB: ${dbName}`)
     })
+    startPushScheduler()
   })
   .catch((error) => {
     console.error(error.message || error)

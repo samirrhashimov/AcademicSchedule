@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
     match: [/^\S+@\S+\.\S+$/, 'E-poçt yanlışdır.'],
   },
   passwordHash: { type: String, required: true },
+  notifyLead: { type: Number, default: 10 },
   resetTokenHash: { type: String, default: null },
   resetTokenExpires: { type: Date, default: null },
 }, { timestamps: true })

@@ -1,4 +1,5 @@
 import { clearSession, getToken } from './auth'
+import { unlinkPushUser } from './onesignal'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
@@ -19,6 +20,7 @@ const request = async (path, options = {}) => {
   }
   const data = await response.json().catch(() => ({}))
   if (response.status === 401) {
+    unlinkPushUser()
     clearSession()
     const path = window.location.pathname
     if (!path.startsWith('/login') && !path.startsWith('/register')) {
@@ -60,6 +62,13 @@ export const changePassword = (payload) => request('/api/auth/password', {
 export const deleteAccount = (password) => request('/api/auth/me', {
   method: 'DELETE',
   body: JSON.stringify({ password }),
+})
+
+export const fetchNotifyLead = () => request('/api/auth/notify-lead')
+
+export const saveNotifyLead = (lead) => request('/api/auth/notify-lead', {
+  method: 'PUT',
+  body: JSON.stringify({ lead }),
 })
 
 export const fetchTemplate = (code) => request(`/api/templates/${encodeURIComponent(code)}`)

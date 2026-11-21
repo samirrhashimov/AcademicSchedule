@@ -21,6 +21,7 @@ API: `http://localhost:5000/api/health`
 - `POST /api/auth/forgot-password` — `{ email }` → bərpa linki e-poçta gedir (SMTP lazımdır)
 - `POST /api/auth/reset-password` — `{ token, password }` → şifrə yenilənir
 - `PUT /api/auth/password` — `{ currentPassword, newPassword }` (JWT lazımdır)
+- `GET/PUT /api/auth/notify-lead` — push xəbərdarlıq vaxtı (5/10/15/30 dəq, JWT lazımdır)
 - `DELETE /api/auth/me` — `{ password }` → hesab + bütün məlumatlar silinir (JWT lazımdır)
 - `GET/POST /api/subjects`, `PUT/DELETE /api/subjects/:id` (JWT lazımdır)
 - `GET/PUT /api/week-state` (JWT lazımdır)
@@ -28,6 +29,14 @@ API: `http://localhost:5000/api/health`
 - `GET /api/templates/:code` — şablonu kodla yükləyir (JWT lazımdır)
 
 Qorunan sorğular `Authorization: Bearer <token>` başlığı istəyir.
+
+## Push bildirişlər (OneSignal)
+
+Server hər dəqiqə bugünkü dərsləri yoxlayır, vaxtı çatanlara push göndərir.
+`ONESIGNAL_APP_ID` + `ONESIGNAL_API_KEY` boşdursa planlayıcı sönülü qalır.
+`TZ=Asia/Baku` mütləqdir — yoxsa saatlar server qurşağına görə sürüşür.
+Həftə/ardıcıllıq məntiqi `src/lib/weeks.js` və `src/lib/lessons.js`-dədir —
+frontend-dəki eyniadlı fayllarla sinxron saxla.
 
 ## Qeydlər
 
