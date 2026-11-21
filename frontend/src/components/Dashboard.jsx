@@ -286,33 +286,22 @@ const findConflicts = (activeSubjects) => {
     return conflicts
 }
 
-const SubjectMenu = ({ subjects, onRequestRemoveSubject, onEditSubject, onDuplicateSubject, onHideSidebar, onAddSubject }) => (
+const SubjectMenu = ({ subjects, onRequestRemoveSubject, onEditSubject, onDuplicateSubject, onAddSubject }) => (
     <aside className='w-full rounded-[12px] bg-[#434140] p-[16px] text-[#FFF] lg:w-[250px]'>
         <div className='mb-[12px] flex items-center justify-between gap-[8px]'>
             <span className='flex items-center gap-[8px]'>
                 <span className='text-[17px] font-bold'>Fənlərim</span>
                 <span className='min-w-[26px] rounded-full bg-[#E7D8C6] px-[8px] py-[3px] text-center text-[12px] font-bold tabular-nums text-[#434140]'>{subjects.length}</span>
             </span>
-            <span className='flex items-center gap-[4px]'>
-                <button
-                    type='button'
-                    onClick={onAddSubject}
-                    aria-label='Yeni fənn'
-                    title='Yeni fənn'
-                    className='rounded-full p-[6px] text-[18px] leading-none text-[#E7D8C6] hover:bg-[#555250]'
-                >
-                    <FiPlus aria-hidden='true' />
-                </button>
-                <button
-                    type='button'
-                    onClick={onHideSidebar}
-                    aria-label='Paneli gizlət'
-                    title='Paneli gizlət'
-                    className='rounded-full p-[6px] text-[18px] leading-none text-[#E7D8C6] hover:bg-[#555250]'
-                >
-                    <FiChevronsLeft aria-hidden='true' />
-                </button>
-            </span>
+            <button
+                type='button'
+                onClick={onAddSubject}
+                aria-label='Yeni fənn'
+                title='Yeni fənn'
+                className='rounded-full p-[6px] text-[18px] leading-none text-[#E7D8C6] hover:bg-[#555250]'
+            >
+                <FiPlus aria-hidden='true' />
+            </button>
         </div>
         {subjects.length === 0 ? (
             <div className='rounded-[8px] border border-dashed border-[#6B6862] p-[16px] text-center text-[13px] text-[#DDD]'>
@@ -873,23 +862,20 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                             schedule: subject.schedule.map((lesson) => ({ ...lesson })),
                             name: `${subject.name} (nüsxə)`,
                         })}
-                        onHideSidebar={toggleSidebar}
                         onAddSubject={() => setIsAddModalOpen(true)}
                     />
                     </div>
                 </div>
                 <main className='min-w-0 flex-1'>
-                    {!sidebarOpen && (
-                        <button
-                            type='button'
-                            onClick={toggleSidebar}
-                            aria-label='Fənlərim panelini aç'
-                            title='Fənlərim'
-                            className='sidebar-reopen no-print fixed left-0 top-1/2 z-10 -translate-y-1/2 rounded-r-[8px] bg-[#434140] px-[8px] py-[14px] text-[18px] text-[#E7D8C6] shadow-md hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
-                        >
-                            <FiChevronsRight aria-hidden='true' />
-                        </button>
-                    )}
+                    <button
+                        type='button'
+                        onClick={toggleSidebar}
+                        aria-label={sidebarOpen ? 'Paneli gizlət' : 'Fənlərim panelini aç'}
+                        title={sidebarOpen ? 'Paneli gizlət' : 'Fənlərim'}
+                        className='sidebar-reopen no-print fixed left-0 top-1/2 z-10 -translate-y-1/2 rounded-r-[8px] bg-[#434140] px-[8px] py-[14px] text-[18px] text-[#E7D8C6] shadow-md hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
+                    >
+                        {sidebarOpen ? <FiChevronsLeft aria-hidden='true' /> : <FiChevronsRight aria-hidden='true' />}
+                    </button>
                     <div className='mb-[10px] flex flex-wrap items-center justify-between gap-[10px]'>
                         <div className='print:hidden'>
                             <h1 className='text-[22px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Həftəlik cədvəl</h1>
