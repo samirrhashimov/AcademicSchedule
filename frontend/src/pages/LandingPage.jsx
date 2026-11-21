@@ -22,18 +22,18 @@ const LandingPage = () => {
 
   return (
     <div className='min-h-screen bg-[#FAFAF8] text-[#333] dark:bg-[#201D1B] dark:text-[#E8E2D9]'>
-      <header className='mx-auto flex w-full max-w-[960px] items-center justify-between px-[20px] py-[18px]'>
-        <p className='font-bold font-["Trirong"] text-[20px] text-[#A65B46]'>AcademicSchedule</p>
-        <div className='flex items-center gap-[10px]'>
+      <header className='mx-auto flex w-full max-w-[960px] items-center justify-between gap-[8px] px-[20px] py-[18px]'>
+        <p className='truncate font-bold font-["Trirong"] text-[16px] text-[#A65B46] sm:text-[20px]'>AcademicSchedule</p>
+        <div className='flex shrink-0 items-center gap-[6px] sm:gap-[10px]'>
           <Link
             to='/login'
-            className='rounded-[8px] px-[14px] py-[9px] text-[14px] font-medium text-[#434140] hover:bg-[#EEE] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+            className='rounded-[8px] px-[10px] py-[8px] text-[13px] font-medium text-[#434140] hover:bg-[#EEE] sm:px-[14px] sm:py-[9px] sm:text-[14px] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             Daxil ol
           </Link>
           <Link
             to='/register'
-            className='rounded-[8px] bg-[#434140] px-[14px] py-[9px] text-[14px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
+            className='rounded-[8px] bg-[#434140] px-[10px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] sm:px-[14px] sm:py-[9px] sm:text-[14px] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
           >
             Qeydiyyat
           </Link>
@@ -41,24 +41,24 @@ const LandingPage = () => {
       </header>
 
       <main className='mx-auto w-full max-w-[960px] px-[20px]'>
-        <section className='grid items-center gap-[32px] py-[48px] md:grid-cols-2 md:py-[72px]'>
+        <section className='grid items-center gap-[24px] py-[32px] sm:gap-[32px] sm:py-[48px] md:grid-cols-2 md:py-[72px]'>
           <div>
-            <h1 className='font-["Trirong"] text-[36px] font-bold leading-tight text-[#434140] md:text-[44px] dark:text-[#EDE8DF]'>
+            <h1 className='text-center font-["Trirong"] text-[30px] font-bold leading-tight text-[#434140] sm:text-[36px] md:text-left md:text-[44px] dark:text-[#EDE8DF]'>
               Dərs cədvəlin bir yerdə
             </h1>
-            <p className='mt-[12px] max-w-[420px] text-[16px] text-[#666] dark:text-[#A8A29E]'>
+            <p className='mx-auto mt-[12px] max-w-[420px] text-center text-[16px] text-[#666] md:mx-0 md:text-left dark:text-[#A8A29E]'>
               Mühazirə və seminarlarını izlə, alt və üst həftələri qarışdırma.
             </p>
-            <div className='mt-[24px] flex flex-wrap gap-[10px]'>
+            <div className='mt-[24px] flex flex-col gap-[10px] sm:flex-row sm:flex-wrap sm:justify-center md:justify-start'>
               <Link
                 to='/register'
-                className='rounded-[8px] bg-[#A65B46] px-[20px] py-[12px] text-[15px] font-medium text-[#FFF] hover:bg-[#96543F]'
+                className='rounded-[8px] bg-[#A65B46] px-[20px] py-[12px] text-center text-[15px] font-medium text-[#FFF] hover:bg-[#96543F]'
               >
                 Pulsuz başla
               </Link>
               <Link
                 to='/login'
-                className='rounded-[8px] border border-[#D8D5CE] px-[20px] py-[12px] text-[15px] font-medium text-[#434140] hover:bg-[#F7F3EC] dark:border-[#4A4440] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'
+                className='rounded-[8px] border border-[#D8D5CE] px-[20px] py-[12px] text-center text-[15px] font-medium text-[#434140] hover:bg-[#F7F3EC] dark:border-[#4A4440] dark:text-[#EDE8DF] dark:hover:bg-[#35302C]'
               >
                 Daxil ol
               </Link>

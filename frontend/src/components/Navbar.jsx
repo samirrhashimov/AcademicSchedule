@@ -29,7 +29,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
     <div className='no-print'>
       <div className='my-[15px] flex flex-wrap items-center justify-between gap-[10px] border-b-[3px] border-b-[#A65B46] pb-[15px]'>
         <div className=''>
-          <p className='font-bold font-["Trirong"] text-[16px] text-[#A65B46] sm:text-[20px] dark:text-[#FFF]'>AcademicSchedule</p>
+          <p className='font-bold font-["Trirong"] text-[16px] leading-none text-[#A65B46] sm:text-[20px] dark:text-[#FFF]'>AcademicSchedule</p>
         </div>
         <div className='hidden flex-wrap items-center gap-[10px] sm:flex'>
           <button
@@ -37,7 +37,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
             onClick={() => setIsAddMenuOpen(true)}
             aria-label='Əlavə et'
             title='Əlavə et (N)'
-            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+            className='flex h-[30px] w-[30px] items-center justify-center rounded-[4px] text-[22px] text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiPlus aria-hidden='true' />
           </button>
@@ -46,7 +46,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
             onClick={() => setIsSearchOpen(true)}
             aria-label='Axtar'
             title='Axtar (/)'
-            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+            className='flex h-[30px] w-[30px] items-center justify-center rounded-[4px] text-[22px] text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiSearch aria-hidden='true' />
           </button>
@@ -55,7 +55,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
             onClick={onOpenDayInfo}
             aria-label='Yaxınlıqdakılar'
             title='Yaxınlıqdakılar (D)'
-            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+            className='flex h-[30px] w-[30px] items-center justify-center rounded-[4px] text-[22px] text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiCalendar aria-hidden='true' />
           </button>
@@ -64,7 +64,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
             onClick={() => window.print()}
             aria-label='Çap et'
             title='Çap et (P)'
-            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+            className='flex h-[30px] w-[30px] items-center justify-center rounded-[4px] text-[22px] text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiPrinter aria-hidden='true' />
           </button>
@@ -73,7 +73,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
             onClick={() => setIsSettingsOpen(true)}
             aria-label='Tənzimləmələr'
             title='Tənzimləmələr (,)'
-            className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+            className='flex h-[30px] w-[30px] items-center justify-center rounded-[4px] text-[22px] text-[#434140] hover:bg-[#EADDCF] dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
           >
             <FiSettings aria-hidden='true' />
           </button>
@@ -83,7 +83,7 @@ const Navbar = ({ subjects, onAddSubject, onSelectLesson, theme, onSelectTheme, 
           onClick={() => setIsNavMenuOpen(true)}
           aria-label='Menyu'
           title='Menyu'
-          className='rounded-[4px] p-[4px] text-[22px] leading-none text-[#434140] hover:bg-[#EADDCF] sm:hidden dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
+          className='flex h-[30px] w-[30px] items-center justify-center rounded-[4px] text-[22px] text-[#434140] hover:bg-[#EADDCF] sm:hidden dark:text-[#EDE8DF] dark:hover:bg-[#3A3632]'
         >
           <FiAlignRight aria-hidden='true' />
         </button>
