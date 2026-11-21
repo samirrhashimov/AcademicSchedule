@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiBell, FiDownload, FiLayers, FiLock, FiLogOut, FiMoon, FiShare2, FiSun, FiTrash2, FiX } from 'react-icons/fi'
+import { FiArchive, FiBell, FiDownload, FiLayers, FiLock, FiLogOut, FiMoon, FiShare2, FiSun, FiTrash2, FiX } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { buildBackup, downloadBackup } from '../lib/backup'
 import { clearSession, getUser } from '../lib/auth'
@@ -11,6 +11,7 @@ import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 import ChangePasswordModal from './ChangePasswordModal'
 import DeleteAccountModal from './DeleteAccountModal'
+import SemestersModal from './SemestersModal'
 import ShareTemplateModal from './ShareTemplateModal'
 import TemplatesModal from './TemplatesModal'
 
@@ -43,6 +44,9 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
   }
   if (view === 'share') {
     return <ShareTemplateModal open onClose={() => setView('root')} subjects={subjects} />
+  }
+  if (view === 'semesters') {
+    return <SemestersModal open onClose={() => setView('root')} />
   }
 
   const user = getUser()
@@ -267,6 +271,17 @@ const SettingsModal = ({ open, theme, onSelectTheme, weekSystem, weekState, subj
             className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
           >
             <FiLayers aria-hidden='true' />
+            Aç
+          </button>
+        </div>
+        <div className='mb-[16px] flex items-center justify-between gap-[12px] rounded-[8px] border border-[#D8D5CE] bg-[#FAFAF8] px-[12px] py-[10px] dark:border-[#4A4440] dark:bg-[#201D1B]'>
+          <p className='truncate text-[14px] font-medium'>Semestrlər</p>
+          <button
+            type='button'
+            onClick={() => setView('semesters')}
+            className='flex min-w-[96px] shrink-0 items-center justify-center gap-[6px] rounded-[6px] bg-[#434140] px-[12px] py-[8px] text-[13px] font-medium text-[#E7D8C6] hover:bg-[#555250] dark:bg-[#E7D8C6] dark:text-[#434140] dark:hover:bg-[#D8D2C4]'
+          >
+            <FiArchive aria-hidden='true' />
             Aç
           </button>
         </div>

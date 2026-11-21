@@ -25,6 +25,9 @@ API: `http://localhost:5000/api/health`
 - `DELETE /api/auth/me` — `{ password }` → hesab + bütün məlumatlar silinir (JWT lazımdır)
 - `GET/POST /api/subjects`, `PUT/DELETE /api/subjects/:id` (JWT lazımdır)
 - `GET/PUT /api/week-state` (JWT lazımdır)
+- `GET /api/semesters`, `GET /api/semesters/:id`, `DELETE /api/semesters/:id` (JWT lazımdır)
+- `POST /api/semesters/archive` — `{ name }` → cari cədvəl arxivlənir, təmiz başlanılır (JWT lazımdır)
+- `POST /api/semesters/:id/restore` — arxiv bərpa olunur, carisi əvvəlcə avtomatik saxlanılır (JWT lazımdır)
 - `POST /api/templates` — `{ name?, subjects }` → `{ code, name }` (JWT lazımdır)
 - `GET /api/templates/:code` — şablonu kodla yükləyir (JWT lazımdır)
 

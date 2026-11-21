@@ -64,6 +64,21 @@ export const deleteAccount = (password) => request('/api/auth/me', {
   body: JSON.stringify({ password }),
 })
 
+export const fetchSemesters = () => request('/api/semesters')
+
+export const fetchSemester = (id) => request(`/api/semesters/${encodeURIComponent(id)}`)
+
+export const archiveSemester = (name) => request('/api/semesters/archive', {
+  method: 'POST',
+  body: JSON.stringify({ name }),
+})
+
+export const restoreSemester = (id) => request(`/api/semesters/${encodeURIComponent(id)}/restore`, {
+  method: 'POST',
+})
+
+export const deleteSemester = (id) => request(`/api/semesters/${encodeURIComponent(id)}`, { method: 'DELETE' })
+
 export const fetchNotifyLead = () => request('/api/auth/notify-lead')
 
 export const saveNotifyLead = (lead) => request('/api/auth/notify-lead', {

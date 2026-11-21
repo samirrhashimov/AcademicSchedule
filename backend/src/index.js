@@ -6,6 +6,7 @@ import authRouter from './routes/auth.js'
 import subjectsRouter from './routes/subjects.js'
 import templatesRouter from './routes/templates.js'
 import weekStateRouter from './routes/weekState.js'
+import semestersRouter from './routes/semesters.js'
 import { startPushScheduler } from './lib/push.js'
 
 if (!process.env.JWT_SECRET) {
@@ -29,6 +30,7 @@ app.use('/api/auth', authRouter)
 app.use('/api/subjects', subjectsRouter)
 app.use('/api/templates', templatesRouter)
 app.use('/api/week-state', weekStateRouter)
+app.use('/api/semesters', semestersRouter)
 
 // eslint-disable-next-line no-unused-vars
 app.use((error, req, res, next) => {
