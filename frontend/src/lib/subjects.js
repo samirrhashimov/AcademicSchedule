@@ -6,11 +6,27 @@ const toCleanString = (value) => (typeof value === 'string' ? value.trim() : '')
 // Tip yalnız say nisbətindən (mühazirə + seminar sayı) hesablanır.
 // Cədvəl günlərinin ayrıca tipi yoxdur; düzəliş cədvəldən edilir:
 // birdəfəlik istisna (overrides) və ya həmişəlik (ardıcıllığın sürüşməsi).
-export const getSequenceIndex = (subject, lessonIndex, weekNumber) => {
-  const weekIndex = subject.frequency === 'every-week'
+// Hər dərsin effektiv tezliyi: dərsinki varsa o, yoxdursa köhnə fənn səviyyəli (miqrasiya).
+export const lessonFrequency = (subject, lesson) => {
+  if (VALID_FREQUENCIES.includes(lesson?.frequency)) {
+    return lesson.frequency
+  }
+  if (VALID_FREQUENCIES.includes(subject?.frequency)) {
+    return subject.frequency
+  }
+  return 'every-week'
+}
+
+export const getSequenceIndex = (subject, lesson, lessonIndex, weekNumber) => {
+  const weekIndex = lessonFrequency(subject, lesson) === 'every-week'
     ? weekNumber
     : Math.floor(weekNumber / 2)
   return (weekIndex * subject.schedule.length) + lessonIndex
+}
+
+export const isLessonVisible = (subject, lesson, mode) => {
+  const frequency = lessonFrequency(subject, lesson)
+  return frequency === 'every-week' || frequency === mode
 }
 
 const getRuleType = (subject, sequenceIndex) => {
@@ -84,6 +100,7 @@ export const normalizeSubject = (raw) => {
     throw new Error(`"${name}": ən azı bir dərs günü olmalıdır.`)
   }
 
+  const frequency = VALID_FREQUENCIES.includes(raw.frequency) ? raw.frequency : 'every-week'
   const schedule = raw.schedule.map((lesson, index) => {
     const day = toCleanString(lesson?.day)
     const startTime = toCleanString(lesson?.startTime || lesson?.time)
@@ -94,7 +111,12 @@ export const normalizeSubject = (raw) => {
     if (endTime <= startTime) {
       throw new Error(`"${name}" (${day}): bitiş saatı başlanğıcdan sonra olmalıdır.`)
     }
-    return { day, startTime, endTime }
+    return {
+      day,
+      startTime,
+      endTime,
+      frequency: VALID_FREQUENCIES.includes(lesson?.frequency) ? lesson.frequency : frequency,
+    }
   })
 
   const overrides = {}
@@ -111,7 +133,7 @@ export const normalizeSubject = (raw) => {
     name,
     lectureCount,
     seminarCount,
-    frequency: VALID_FREQUENCIES.includes(raw.frequency) ? raw.frequency : 'every-week',
+    frequency,
     schedule,
     teacher: toCleanString(raw.teacher),
     room: toCleanString(raw.room),

@@ -5,7 +5,7 @@ import { useGlobalShortcuts } from '../lib/useGlobalShortcuts'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
 import DayInfoModal from './DayInfoModal'
 import NewSubjectModal from './NewSubjectModal'
-import { getSequenceIndex, resolveLessonType } from '../lib/subjects'
+import { getSequenceIndex, isLessonVisible, resolveLessonType } from '../lib/subjects'
 import {
   addWeeks,
   baseModeForWeek,
@@ -101,15 +101,16 @@ const layoutDayEvents = (events) => {
 }
 
 // Cədvəl və mobil siyahı baxılan həftəyə, "Yaxınlıqdakılar" həmişə real həftəyə baxır.
-const lessonsIn = (list, dayName, weekNum) => (
+// mode verilməsə tezlik süzgəci işləmir (hamısı göstərilir).
+const lessonsIn = (list, dayName, weekNum, mode = null) => (
     list.flatMap((subject) => (
         subject.schedule
             .map((lesson, lessonIndex) => ({
                 subject,
                 lesson,
-                sequenceIndex: getSequenceIndex(subject, lessonIndex, weekNum),
+                sequenceIndex: getSequenceIndex(subject, lesson, lessonIndex, weekNum),
             }))
-            .filter(({ lesson }) => lesson.day === dayName)
+            .filter(({ subject: item, lesson }) => lesson.day === dayName && (!mode || isLessonVisible(item, lesson, mode)))
             .map(({ subject, lesson, sequenceIndex }) => ({
                 subject,
                 lesson,
@@ -117,6 +118,10 @@ const lessonsIn = (list, dayName, weekNum) => (
                 type: resolveLessonType(subject, sequenceIndex),
             }))
     )).sort((a, b) => toMinutes(getStartTime(a.lesson)) - toMinutes(getStartTime(b.lesson)))
+)
+
+const visibleSubjects = (list, mode) => (
+    list.filter((subject) => subject.schedule.some((lesson) => isLessonVisible(subject, lesson, mode)))
 )
 
 // Çap üçün: yalnız dərs olan saatlar — boş sətirlər çap olunmur.
@@ -151,14 +156,16 @@ const PrintSchedules = ({ subjects, weekState }) => {
             {weeks.map(({ mode, monday }) => {
                 const weekNumber = getWeekNumber(monday)
                 const active = !mode
-                    ? subjects.map((subject) => ({ ...subject, frequency: 'every-week' }))
-                    : subjects.filter((subject) => (
-                        subject.frequency === 'every-week' || subject.frequency === mode
-                    ))
+                    ? subjects.map((subject) => ({
+                        ...subject,
+                        frequency: 'every-week',
+                        schedule: subject.schedule.map((lesson) => ({ ...lesson, frequency: 'every-week' })),
+                    }))
+                    : visibleSubjects(subjects, mode)
                 const byDay = days.map((name, index) => {
                     const date = new Date(monday)
                     date.setDate(monday.getDate() + index)
-                    return { name, date, lessons: lessonsIn(active, name, weekNumber) }
+                    return { name, date, lessons: lessonsIn(active, name, weekNumber, mode) }
                 })
                 const contentHours = getContentHours(byDay.flatMap(({ lessons }) => lessons.map(({ lesson }) => lesson)))
                 return (
@@ -239,11 +246,14 @@ const isOverridden = (subject, sequenceIndex) => (
     Boolean(subject.overrides && subject.overrides[String(sequenceIndex)])
 )
 
-const getVisibleHours = (activeSubjects) => {
+const getVisibleHours = (activeSubjects, mode) => {
     let minHour = 8
     let maxHour = 20
     for (const subject of activeSubjects) {
         for (const lesson of subject.schedule) {
+            if (!isLessonVisible(subject, lesson, mode)) {
+                continue
+            }
             const start = getStartTime(lesson)
             if (!start) {
                 continue
@@ -258,10 +268,13 @@ const getVisibleHours = (activeSubjects) => {
     return Array.from({ length: maxHour - minHour + 1 }, (_, index) => minHour + index)
 }
 
-const findConflicts = (activeSubjects) => {
+const findConflicts = (activeSubjects, mode) => {
     const byDay = {}
     for (const subject of activeSubjects) {
         for (const lesson of subject.schedule) {
+            if (!isLessonVisible(subject, lesson, mode)) {
+                continue
+            }
             if (!byDay[lesson.day]) {
                 byDay[lesson.day] = []
             }
@@ -732,37 +745,38 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
     // Tək həftə rejimində tezlik fərqi yoxdur: hamı hər həftə görünür.
     const weekSystem = weekState.system === 'single' ? 'single' : 'double'
     const displaySubjects = weekSystem === 'single'
-        ? subjects.map((subject) => ({ ...subject, frequency: 'every-week' }))
+        ? subjects.map((subject) => ({
+            ...subject,
+            frequency: 'every-week',
+            schedule: subject.schedule.map((lesson) => ({ ...lesson, frequency: 'every-week' })),
+        }))
         : subjects
 
-    const activeSubjects = displaySubjects.filter((subject) => (
-        subject.frequency === 'every-week'
-        || subject.frequency === viewedMode
-    ))
-    const currentActiveSubjects = displaySubjects.filter((subject) => (
-        subject.frequency === 'every-week'
-        || subject.frequency === currentMode
-    ))
+    const activeSubjects = visibleSubjects(displaySubjects, viewedMode)
+    const currentActiveSubjects = visibleSubjects(displaySubjects, currentMode)
 
-    const hours = getVisibleHours(activeSubjects)
-    const conflicts = findConflicts(activeSubjects)
+    const hours = getVisibleHours(activeSubjects, viewedMode)
+    const conflicts = findConflicts(activeSubjects, viewedMode)
 
     const occurrences = activeSubjects.flatMap((subject) => (
-        subject.schedule.map((lesson, lessonIndex) => {
-            const sequenceIndex = getSequenceIndex(subject, lessonIndex, viewedWeekNumber)
-            return {
-                subject,
-                lesson,
-                sequenceIndex,
-                type: resolveLessonType(subject, sequenceIndex),
-            }
-        })
+        subject.schedule
+            .map((lesson, lessonIndex) => ({ subject, lesson, lessonIndex }))
+            .filter(({ lesson }) => isLessonVisible(subject, lesson, viewedMode))
+            .map(({ subject, lesson, lessonIndex }) => {
+                const sequenceIndex = getSequenceIndex(subject, lesson, lessonIndex, viewedWeekNumber)
+                return {
+                    subject,
+                    lesson,
+                    sequenceIndex,
+                    type: resolveLessonType(subject, sequenceIndex),
+                }
+            })
     ))
     const lectureTotal = occurrences.filter((occurrence) => occurrence.type === 'lecture').length
     const seminarTotal = occurrences.filter((occurrence) => occurrence.type === 'seminar').length
 
     const nowMinutes = today.getHours() * 60 + today.getMinutes()
-    const todayLessons = lessonsIn(currentActiveSubjects, days[todayIndex], currentWeekNumber)
+    const todayLessons = lessonsIn(currentActiveSubjects, days[todayIndex], currentWeekNumber, currentMode)
 
     // Sabah: həftə dəyişirsə (bazar → bazar ertəsi) növbəti həftənin tipi ilə.
     const tomorrowDate = new Date(todayMidnight)
@@ -770,14 +784,11 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
     const tomorrowMonday = getMonday(tomorrowDate)
     const tomorrowWeekNumber = getWeekNumber(tomorrowMonday)
     const tomorrowMode = resolveWeekType(weekState, tomorrowMonday).mode
-    const tomorrowActiveSubjects = displaySubjects.filter((subject) => (
-        subject.frequency === 'every-week'
-        || subject.frequency === tomorrowMode
-    ))
+    const tomorrowActiveSubjects = visibleSubjects(displaySubjects, tomorrowMode)
     const tomorrowDayName = days[(todayIndex + 1) % 7]
-    const tomorrowLessons = lessonsIn(tomorrowActiveSubjects, tomorrowDayName, tomorrowWeekNumber)
+    const tomorrowLessons = lessonsIn(tomorrowActiveSubjects, tomorrowDayName, tomorrowWeekNumber, tomorrowMode)
 
-    const mobileLessons = lessonsIn(activeSubjects, mobileDay, viewedWeekNumber)
+    const mobileLessons = lessonsIn(activeSubjects, mobileDay, viewedWeekNumber, viewedMode)
     const mobileDate = weekDays[days.indexOf(mobileDay)]?.date
     const mobileDateLabel = mobileDate ? `${mobileDate.getDate()}.${String(mobileDate.getMonth() + 1).padStart(2, '0')}` : ''
 
@@ -1032,7 +1043,7 @@ const Dashboard = ({ subjects, onAddSubject, onRemoveSubject, onUpdateSubject, o
                                 </div>
                                 {weekDays.map(({ name, date }) => {
                                     const isTodayColumn = date.toDateString() === today.toDateString()
-                                    const positioned = layoutDayEvents(lessonsIn(activeSubjects, name, viewedWeekNumber))
+                                    const positioned = layoutDayEvents(lessonsIn(activeSubjects, name, viewedWeekNumber, viewedMode))
                                     const showNowLine = isTodayColumn
                                         && nowMinutes >= hours[0] * 60
                                         && nowMinutes <= (hours[hours.length - 1] + 1) * 60

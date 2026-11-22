@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FiX } from 'react-icons/fi'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
+import { lessonFrequency } from '../lib/subjects'
 
 const days = [
   'Bazar ertəsi',
@@ -58,7 +59,15 @@ const NewSubjectModal = ({ onClose, onSubmit, onDelete = null, initialSubject = 
   const [subjectName, setSubjectName] = useState(initialSubject?.name || '')
   const [lectureCount, setLectureCount] = useState(initialSubject?.lectureCount ?? 2)
   const [seminarCount, setSeminarCount] = useState(initialSubject?.seminarCount ?? 1)
-  const [frequency, setFrequency] = useState(initialSubject?.frequency || 'every-week')
+  const [dayFrequency, setDayFrequency] = useState(() => {
+    const map = {}
+    for (const lesson of initialSubject?.schedule || []) {
+      if (lesson?.day) {
+        map[lesson.day] = lessonFrequency(initialSubject, lesson)
+      }
+    }
+    return map
+  })
   const [teacher, setTeacher] = useState(initialSubject?.teacher || '')
   const [room, setRoom] = useState(initialSubject?.room || '')
   const [error, setError] = useState('')
@@ -94,6 +103,10 @@ const NewSubjectModal = ({ onClose, onSubmit, onDelete = null, initialSubject = 
       ...currentDetails,
       [day]: { ...currentDetails[day], endTime: time },
     }))
+  }
+
+  const updateDayFrequency = (day, frequency) => {
+    setDayFrequency((current) => ({ ...current, [day]: frequency }))
   }
 
   const handleDayToggle = (day) => {
@@ -139,13 +152,21 @@ const NewSubjectModal = ({ onClose, onSubmit, onDelete = null, initialSubject = 
       day,
       startTime: dayDetails[day].startTime,
       endTime: dayDetails[day].endTime,
+      frequency: showFrequency ? (dayFrequency[day] || 'every-week') : 'every-week',
     }))
+    // Köhnə fənn səviyyəli sahə yalnız miqrasiya üçündür: hamısı eynidirsə o, yoxsa every-week.
+    const frequencies = [...new Set(schedule.map((lesson) => lesson.frequency))]
+    const subjectFrequency = frequencies.length === 1 ? frequencies[0] : 'every-week'
 
     const layoutChanged = isEditMode && (
       initialSubject.lectureCount !== Number(lectureCount)
       || initialSubject.seminarCount !== Number(seminarCount)
-      || initialSubject.frequency !== frequency
-      || JSON.stringify(initialSubject.schedule.map(({ day, startTime, endTime }) => ({ day, startTime, endTime })))
+      || JSON.stringify(initialSubject.schedule.map((lesson) => ({
+        day: lesson.day,
+        startTime: lesson.startTime,
+        endTime: lesson.endTime,
+        frequency: showFrequency ? lessonFrequency(initialSubject, lesson) : 'every-week',
+      })))
         !== JSON.stringify(schedule)
     )
 
@@ -155,7 +176,7 @@ const NewSubjectModal = ({ onClose, onSubmit, onDelete = null, initialSubject = 
       name: subjectName.trim(),
       lectureCount: Number(lectureCount),
       seminarCount: Number(seminarCount),
-      frequency: showFrequency ? frequency : (initialSubject?.frequency || 'every-week'),
+      frequency: subjectFrequency,
       schedule,
       teacher: teacher.trim(),
       room: room.trim(),
@@ -255,59 +276,45 @@ const NewSubjectModal = ({ onClose, onSubmit, onDelete = null, initialSubject = 
                     <span className='text-[14px] font-medium'>{day}</span>
                   </label>
                   {selected && (
-                    <div className='mt-[10px] grid grid-cols-[1fr_14px_1fr] items-center gap-[8px]'>
-                      <input
-                        type='time'
-                        value={dayDetails[day]?.startTime || ''}
-                        onChange={(event) => updateDayTime(day, event.target.value)}
-                        required
-                        aria-label={`${day} üçün başlanğıc saatı`}
-                        className='w-full rounded-[6px] border border-[#D8D5CE] bg-[#FFF] p-[8px] text-[14px] text-[#333] outline-none focus:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B] dark:text-[#E8E2D9]'
-                      />
-                      <span className='text-center text-[#999] dark:text-[#A8A29E]'>-</span>
-                      <input
-                        type='time'
-                        value={dayDetails[day]?.endTime || ''}
-                        onChange={(event) => updateDayEndTime(day, event.target.value)}
-                        required
-                        aria-label={`${day} üçün bitiş saatı`}
-                        className='w-full rounded-[6px] border border-[#D8D5CE] bg-[#FFF] p-[8px] text-[14px] text-[#333] outline-none focus:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B] dark:text-[#E8E2D9]'
-                      />
-                    </div>
+                    <>
+                      <div className='mt-[10px] grid grid-cols-[1fr_14px_1fr] items-center gap-[8px]'>
+                        <input
+                          type='time'
+                          value={dayDetails[day]?.startTime || ''}
+                          onChange={(event) => updateDayTime(day, event.target.value)}
+                          required
+                          aria-label={`${day} üçün başlanğıc saatı`}
+                          className='w-full rounded-[6px] border border-[#D8D5CE] bg-[#FFF] p-[8px] text-[14px] text-[#333] outline-none focus:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B] dark:text-[#E8E2D9]'
+                        />
+                        <span className='text-center text-[#999] dark:text-[#A8A29E]'>-</span>
+                        <input
+                          type='time'
+                          value={dayDetails[day]?.endTime || ''}
+                          onChange={(event) => updateDayEndTime(day, event.target.value)}
+                          required
+                          aria-label={`${day} üçün bitiş saatı`}
+                          className='w-full rounded-[6px] border border-[#D8D5CE] bg-[#FFF] p-[8px] text-[14px] text-[#333] outline-none focus:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B] dark:text-[#E8E2D9]'
+                        />
+                      </div>
+                      {showFrequency && (
+                        <select
+                          value={dayFrequency[day] || 'every-week'}
+                          onChange={(event) => updateDayFrequency(day, event.target.value)}
+                          aria-label={`${day} üçün həftə tezliyi`}
+                          className='mt-[8px] w-full rounded-[6px] border border-[#D8D5CE] bg-[#FFF] p-[8px] text-[13px] text-[#434140] outline-none focus:border-[#A65B46] dark:border-[#4A4440] dark:bg-[#201D1B] dark:text-[#E8E2D9]'
+                        >
+                          <option value='every-week'>Hər həftə</option>
+                          <option value='upper-week'>Yalnız Üst həftə</option>
+                          <option value='lower-week'>Yalnız Alt həftə</option>
+                        </select>
+                      )}
+                    </>
                   )}
                 </div>
               )
             })}
           </div>
         </fieldset>
-
-        {showFrequency && (
-        <fieldset className='mb-[20px]'>
-          <legend className='mb-[10px] text-[14px] font-bold text-[#434140] dark:text-[#EDE8DF]'>Həftə tezliyi</legend>
-          <div className='flex flex-col gap-[8px]'>
-            {[
-              { value: 'every-week', label: 'Hər həftə' },
-              { value: 'upper-week', label: 'Yalnız Üst həftə' },
-              { value: 'lower-week', label: 'Yalnız Alt həftə' },
-            ].map((option) => (
-              <label
-                key={option.value}
-                className={`flex cursor-pointer items-center gap-[10px] rounded-[8px] border px-[12px] py-[10px] text-[14px] ${frequency === option.value ? 'border-[#A65B46] bg-[#FDF8F5] font-medium dark:bg-[#38302A]' : 'border-[#D8D5CE] bg-[#FFF] dark:border-[#4A4440] dark:bg-[#2A2724]'}`}
-              >
-                <input
-                  type='radio'
-                  name='frequency'
-                  value={option.value}
-                  checked={frequency === option.value}
-                  onChange={(event) => setFrequency(event.target.value)}
-                  className='h-[16px] w-[16px] shrink-0 accent-[#A65B46]'
-                />
-                {option.label}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        )}
 
         {error && <p className='mb-[16px] rounded-[8px] bg-[#FCE5E0] p-[10px] text-[14px] text-[#A65B46]'>{error}</p>}
 

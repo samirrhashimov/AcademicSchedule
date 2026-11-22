@@ -3,7 +3,7 @@ import { Subject } from '../models/Subject.js'
 import { WeekState } from '../models/WeekState.js'
 import { PushLog } from '../models/PushLog.js'
 import { getWeekNumber, mondayOfWeek, resolveWeekType, toDayKey } from './weeks.js'
-import { getSequenceIndex, resolveLessonType } from './lessons.js'
+import { getSequenceIndex, isLessonVisible, resolveLessonType } from './lessons.js'
 
 // frontend/src/components/Dashboard.jsx-dakı days ilə eyni sıra (bazar ertəsi birinci).
 const DAYS = [
@@ -96,16 +96,15 @@ export const checkDueLessons = async (now = new Date()) => {
       for (const context of contexts) {
         const mode = resolveWeekType(weekState, context.monday).mode
         for (const subject of subjects) {
-          const frequency = weekState.system === 'single' ? 'every-week' : subject.frequency
-          if (frequency !== 'every-week' && frequency !== mode) {
-            continue
-          }
-          const effective = { ...subject, frequency }
-          for (const [lessonIndex, lesson] of subject.schedule.entries()) {
-            if (lesson.day !== context.dayName) {
+          for (const [lessonIndex, rawLesson] of subject.schedule.entries()) {
+            if (rawLesson.day !== context.dayName) {
               continue
             }
-            const sequenceIndex = getSequenceIndex(effective, lessonIndex, context.weekNumber)
+            const lesson = weekState.system === 'single' ? { ...rawLesson, frequency: 'every-week' } : rawLesson
+            if (!isLessonVisible(subject, lesson, mode)) {
+              continue
+            }
+            const sequenceIndex = getSequenceIndex(subject, lesson, lessonIndex, context.weekNumber)
             const key = `${context.dateKey}-${userId}-${subject._id}-${sequenceIndex}`
             const diff = minutesUntilLesson(context.date, lesson.startTime, now)
             if (diff < 0 || diff > userLead) {
@@ -119,7 +118,7 @@ export const checkDueLessons = async (now = new Date()) => {
               }
               throw error
             }
-            const body = buildPushBody(context.dateKey, todayKey, lesson.startTime, resolveLessonType(effective, sequenceIndex))
+            const body = buildPushBody(context.dateKey, todayKey, lesson.startTime, resolveLessonType(subject, sequenceIndex))
             try {
               const recipients = await sendPush(userId, subject.name, body)
               pushed += 1

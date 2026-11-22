@@ -2,6 +2,8 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   getSequenceIndex,
+  isLessonVisible,
+  lessonFrequency,
   normalizeSubject,
   resolveLessonType,
   withOnceOverride,
@@ -71,6 +73,38 @@ describe('normalizeSubject', () => {
   })
 })
 
+describe('dərs tezliyi', () => {
+  it('öncəlik: dərsinki, sonra fənninki, sonra every-week', () => {
+    assert.equal(lessonFrequency({ frequency: 'upper-week' }, { frequency: 'lower-week' }), 'lower-week')
+    assert.equal(lessonFrequency({ frequency: 'upper-week' }, {}), 'upper-week')
+    assert.equal(lessonFrequency({}, {}), 'every-week')
+    assert.equal(lessonFrequency({ frequency: 'pis' }, { frequency: 'pis' }), 'every-week')
+  })
+
+  it('normalizeSubject dərslərə tezlik doldurur', () => {
+    const subject = normalizeSubject({
+      name: 'X',
+      lectureCount: 1,
+      seminarCount: 1,
+      frequency: 'upper-week',
+      schedule: [
+        { day: 'A', startTime: '10:00', endTime: '11:00' },
+        { day: 'B', startTime: '10:00', endTime: '11:00', frequency: 'lower-week' },
+      ],
+    })
+    assert.deepEqual(subject.schedule.map((lesson) => lesson.frequency), ['upper-week', 'lower-week'])
+  })
+
+  it('isLessonVisible rejimə görə süzür', () => {
+    const subject = makeSubject()
+    const every = subject.schedule[0]
+    const upper = { ...subject.schedule[1], frequency: 'upper-week' }
+    assert.equal(isLessonVisible(subject, every, 'lower-week'), true)
+    assert.equal(isLessonVisible(subject, upper, 'upper-week'), true)
+    assert.equal(isLessonVisible(subject, upper, 'lower-week'), false)
+  })
+})
+
 describe('nisbət mühərriki (2 mühazirə + 1 seminar)', () => {
   it('ardıcıllıq L,L,S təkrarlanır', () => {
     const subject = makeSubject()
@@ -80,9 +114,21 @@ describe('nisbət mühərriki (2 mühazirə + 1 seminar)', () => {
 
   it('getSequenceIndex həftə rejiminə görə artır', () => {
     const subject = makeSubject()
-    assert.equal(getSequenceIndex(subject, 1, 10), 10 * 2 + 1)
-    const alt = { ...subject, frequency: 'upper-week' }
-    assert.equal(getSequenceIndex(alt, 1, 10), Math.floor(10 / 2) * 2 + 1)
+    assert.equal(getSequenceIndex(subject, subject.schedule[1], 1, 10), 10 * 2 + 1)
+    const legacy = {
+      ...subject,
+      frequency: 'upper-week',
+      schedule: subject.schedule.map((lesson) => ({ ...lesson })),
+    }
+    delete legacy.schedule[1].frequency
+    assert.equal(getSequenceIndex(legacy, legacy.schedule[1], 1, 10), Math.floor(10 / 2) * 2 + 1)
+  })
+
+  it('dərs tezliyi fənninkini üstələyir', () => {
+    const subject = makeSubject()
+    const upper = { ...subject.schedule[0], frequency: 'upper-week' }
+    assert.equal(getSequenceIndex(subject, upper, 0, 10), Math.floor(10 / 2) * 2 + 0)
+    assert.equal(getSequenceIndex(subject, subject.schedule[0], 0, 10), 10 * 2 + 0)
   })
 
   it('birdəfəlik: fərqlidirsə yazılır, qaydaya bərabərdirsə silinir', () => {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { FiX } from 'react-icons/fi'
-import { getSequenceIndex, resolveLessonType } from '../lib/subjects'
+import { getSequenceIndex, lessonFrequency, resolveLessonType } from '../lib/subjects'
 import { getWeekNumber, mondayOfWeek } from '../lib/weeks'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { useLockBodyScroll } from '../lib/useLockBodyScroll'
@@ -24,7 +24,11 @@ const SearchModal = ({ subjects, onClose, onSelectLesson, weekSystem = 'double' 
   const showFrequency = weekSystem !== 'single'
   const searchable = showFrequency
     ? subjects
-    : subjects.map((subject) => ({ ...subject, frequency: 'every-week' }))
+    : subjects.map((subject) => ({
+      ...subject,
+      frequency: 'every-week',
+      schedule: subject.schedule.map((lesson) => ({ ...lesson, frequency: 'every-week' })),
+    }))
 
   const normalizedQuery = query.trim().toLowerCase()
   const results = normalizedQuery
@@ -78,11 +82,11 @@ const SearchModal = ({ subjects, onClose, onSelectLesson, weekSystem = 'double' 
                 <div key={subject.id} className='rounded-[8px] border border-[#EEE] bg-[#FFF] p-[12px] dark:border-[#4A4440] dark:bg-[#35302C]'>
                   <p className='truncate text-[14px] font-bold text-[#434140] dark:text-[#EDE8DF]'>{subject.name}</p>
                   <p className='mt-[2px] text-[12px] text-[#777] dark:text-[#A8A29E]'>
-                    {[subject.teacher && `Müəllim: ${subject.teacher}`, subject.room && `Otaq: ${subject.room}`, showFrequency && frequencyLabels[subject.frequency]].filter(Boolean).join(' • ')}
+                    {[subject.teacher && `Müəllim: ${subject.teacher}`, subject.room && `Otaq: ${subject.room}`].filter(Boolean).join(' • ')}
                   </p>
                   <ul className='mt-[8px] flex flex-col gap-[6px]'>
                     {subject.schedule.map((lesson, lessonIndex) => {
-                      const sequenceIndex = getSequenceIndex(subject, lessonIndex, weekNumber)
+                      const sequenceIndex = getSequenceIndex(subject, lesson, lessonIndex, weekNumber)
                       const type = resolveLessonType(subject, sequenceIndex)
                       return (
                         <li key={`${lesson.day}-${lesson.startTime}`}>
@@ -97,6 +101,9 @@ const SearchModal = ({ subjects, onClose, onSelectLesson, weekSystem = 'double' 
                           >
                             <span className='truncate'>
                               <strong>{lesson.day}</strong> {lesson.startTime}–{lesson.endTime}
+                              {showFrequency && (
+                                <span className='text-[#777] dark:text-[#A8A29E]'> • {frequencyLabels[lessonFrequency(subject, lesson)]}</span>
+                              )}
                             </span>
                             <span className={`shrink-0 rounded-full px-[8px] py-[2px] text-[12px] ${type === 'lecture' ? 'bg-[#FCE5E0] text-[#A65B46]' : 'bg-[#E3F1EC] text-[#477A68]'}`}>
                               {typeLabels[type]}

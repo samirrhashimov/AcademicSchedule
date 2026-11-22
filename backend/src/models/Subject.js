@@ -4,6 +4,7 @@ const lessonSchema = new mongoose.Schema({
   day: { type: String, required: true, trim: true },
   startTime: { type: String, required: true, trim: true },
   endTime: { type: String, required: true, trim: true },
+  frequency: { type: String, enum: ['every-week', 'upper-week', 'lower-week'], default: 'every-week' },
 }, { _id: false })
 
 const subjectSchema = new mongoose.Schema({

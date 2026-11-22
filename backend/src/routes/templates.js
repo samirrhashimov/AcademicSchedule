@@ -17,10 +17,15 @@ const generateCode = (length = 6) => (
   ).join('')
 )
 
-const sanitizeLesson = (lesson) => ({
+const VALID_FREQUENCIES = ['every-week', 'upper-week', 'lower-week']
+
+const sanitizeLesson = (lesson, fallbackFrequency) => ({
   day: String(lesson?.day || ''),
   startTime: String(lesson?.startTime || ''),
   endTime: String(lesson?.endTime || ''),
+  frequency: VALID_FREQUENCIES.includes(lesson?.frequency)
+    ? lesson.frequency
+    : (VALID_FREQUENCIES.includes(fallbackFrequency) ? fallbackFrequency : 'every-week'),
 })
 
 const sanitizeSubject = (subject) => ({
@@ -28,7 +33,7 @@ const sanitizeSubject = (subject) => ({
   lectureCount: Number(subject?.lectureCount) || 0,
   seminarCount: Number(subject?.seminarCount) || 0,
   frequency: subject?.frequency,
-  schedule: Array.isArray(subject?.schedule) ? subject.schedule.map(sanitizeLesson) : [],
+  schedule: Array.isArray(subject?.schedule) ? subject.schedule.map((lesson) => sanitizeLesson(lesson, subject?.frequency)) : [],
   teacher: String(subject?.teacher || ''),
   room: String(subject?.room || ''),
   sequenceOffset: Number(subject?.sequenceOffset) || 0,
